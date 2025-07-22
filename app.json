@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "habit-battles",
-    "slug": "habit-battles",
+    "slug": "dare",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,17 +13,47 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dare.dare",
+      "config": {
+        "googleSignIn": {
+          "reservedClientId": "com.googleusercontent.apps.YOUR_CLIENT_ID"
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.dare.dare",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
+        "expo-firebase-core",
+        {
+          "plistPath": "./GoogleService-Info.plist"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b9c18f4a-fa8a-480f-915d-f554a488c17a"
+      }
+    },
+    "owner": "slvo101"
   }
 }
