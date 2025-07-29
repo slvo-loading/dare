@@ -21,15 +21,8 @@ export default function GameStart({ navigation }: GameStartScreenProps) {
   const goToBattleScreen = () => {
     navigation.reset({
         index: 0,
-        routes: [{ name: 'HabitSelection' }],
+        routes: [{ name: 'BattleScreen' }],
       })
-
-    navigation.navigate('MainTabs', { 
-      screen: 'BattleStack',
-      params: {
-        screen: 'BattleScreen'
-      }
-    })
   }
 
   return (

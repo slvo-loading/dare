@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ProfileScreen from '../screens/profile/ProfileScreen';
-import EditProfileScreen from '../screens/profile/EditProfileScreen';
-import FriendsList from '../screens/profile/FriendsList';
-import Settings from '../screens/profile/Settings';
+import EditProfileScreen from '../components/profile/EditProfileScreen';
+import FriendsList from '../components/profile/FriendsList';
+import ProfileScreen from '../components/profile/ProfileScreen';
+import Settings from '../components/profile/Settings';
 import { ProfileStackParamList } from '../types';
 
 

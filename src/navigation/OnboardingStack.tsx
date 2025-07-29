@@ -1,9 +1,9 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 
-import OnboardingStep1 from '../screens/onboarding/OnboardingStep1';
-import OnboardingStep2 from '../screens/onboarding/OnboardingStep2';
-import OnboardingStep3 from '../screens/onboarding/OnboardingStep3';
+import OnboardingStep1 from '../components/onboarding/OnboardingStep1';
+import OnboardingStep2 from '../components/onboarding/OnboardingStep2';
+import OnboardingStep3 from '../components/onboarding/OnboardingStep3';
 import { OnboardingStackParamList } from '../types';
 
 type OnboardingStackProps = {

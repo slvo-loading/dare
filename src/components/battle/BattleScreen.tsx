@@ -4,6 +4,9 @@ import { BattleStackProps } from "../../types";
 export default function BattleScreen({ navigation }: BattleStackProps<'BattleScreen'>) {
   return (
     <View>
+      <Button 
+      title="New Battle"
+      onPress={() => navigation.navigate('OpponentSelection')}/>
       <Text>Dare Requests</Text>
       <Button
         title="Request from 1234"

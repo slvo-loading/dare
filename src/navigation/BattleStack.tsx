@@ -1,12 +1,17 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import BattleScreen from '../screens/battle/BattleScreen';
-import ResponseScreen from '../screens/battle/ResponseScreen';
-import SubmitScreen from '../screens/battle/SubmitScreen';
-import { BattleStackParamList } from '../types';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useEffect, useCallback } from 'react';
-import { TabScreenProps } from '../types';
+import React, { useCallback } from 'react';
+import BattleScreen from '../components/battle/BattleScreen';
+import ResponseScreen from '../components/battle/ResponseScreen';
+import SubmitScreen from '../components/battle/SubmitScreen';
+import { BattleStackParamList, TabScreenProps } from '../types';
+
+import GameStart from '../components/matchmaking/GameStart';
+import HabitConfigScreen from '../components/matchmaking/HabitConfigScreen';
+import InviteFriendScreen from '../components/matchmaking/InviteFriendScreen';
+import MatchmakingScreen from '../components/matchmaking/MatchmakingScreen';
+import OpponentSelection from '../components/matchmaking/OpponentSelection';
 
 const Stack = createNativeStackNavigator<BattleStackParamList>();
 
@@ -46,6 +51,12 @@ useFocusEffect(
         <Stack.Screen name="BattleScreen" component={BattleScreen} />
         <Stack.Screen name="ResponseScreen" component={ResponseScreen} />
         <Stack.Screen name="SubmitScreen" component={SubmitScreen} />
+
+        <Stack.Screen name="HabitConfig" component={HabitConfigScreen} />
+        <Stack.Screen name="OpponentSelection" component={OpponentSelection} />
+        <Stack.Screen name="InviteFriend" component={InviteFriendScreen} />
+        <Stack.Screen name="Matchmaking" component={MatchmakingScreen} />
+        <Stack.Screen name="GameStart" component={GameStart} />
     </Stack.Navigator>
   );
 }

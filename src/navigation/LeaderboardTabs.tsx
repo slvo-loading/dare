@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import FriendsBoard from '../screens/leaderboards/FriendsBoard';
-import GlobalBoard from '../screens/leaderboards/GlobalBoard';
+import FriendsBoard from '../components/leaderboards/FriendsBoard';
+import GlobalBoard from '../components/leaderboards/GlobalBoard';
 import { LeaderboardTabsParamList } from '../types';
 
 const Tab = createBottomTabNavigator<LeaderboardTabsParamList>();

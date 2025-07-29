@@ -1,7 +1,7 @@
 import { View, Text, Button } from "react-native";
-import { MatchmakingStackProps } from "../../types";
+import { BattleStackProps } from "../../types";
 
-export default function InviteFriendScreen({ navigation }: MatchmakingStackProps<'InviteFriend'>) {
+export default function InviteFriendScreen({ navigation }: BattleStackProps<'InviteFriend'>) {
   return (
     <View>
       <Text>send the invite to your friend</Text>

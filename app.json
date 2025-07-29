@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "dareapp",
     "name": "habit-battles",
     "slug": "dare",
     "version": "1.0.0",
@@ -14,11 +15,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dare.dare",
-      "config": {
-        "googleSignIn": {
-          "reservedClientId": "com.googleusercontent.apps.YOUR_CLIENT_ID"
-        }
+      "bundleIdentifier": "com.dare.dareapp",
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
+      },
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -47,9 +50,17 @@
         {
           "plistPath": "./GoogleService-Info.plist"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
+      "FIREBASE_API_KEY": "AIzaSyB6jd18FzHRZdXqxp82UGqSp4MbQo_gSFU",
+      "FIREBASE_AUTH_DOMAIN": "dare-454c8.firebaseapp.com",
+      "FIREBASE_PROJECT_ID": "dare-454c8",
+      "FIREBASE_STORAGE_BUCKET": "dare-454c8.firebasestorage.app",
+      "FIREBASE_MESSAGING_SENDER_ID": "646217173104",
+      "FIREBASE_APP_ID": "1:646217173104:web:92c89b436e2b235c1bccb5",
+      "FIREBASE_MEASUREMENT_ID": "G-FTJ4MG35X6",
       "eas": {
         "projectId": "b9c18f4a-fa8a-480f-915d-f554a488c17a"
       }

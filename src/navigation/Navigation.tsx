@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../context/AuthContext';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+import FriendsList from '../components/profile/FriendsList';
+import OtherProfiles from '../components/root/OtherProfiles';
 import AuthStack from './AuthStack';
 import MainTabs from './MainTabs';
 import OnboardingStack from './OnboardingStack';
-import FriendsList from '../screens/profile/FriendsList';
-import OtherProfiles from '../screens/root/OtherProfiles';
 
 export default function Navigation() {
-  const { isAuthenticated } = useAuth();
+  const { user, session } = useAuth();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -39,7 +39,8 @@ export default function Navigation() {
     }} />;
   }
 
-  return isAuthenticated ? (
+  return (
+    session ? (
     <Stack.Navigator>
         <Stack.Screen
         name="MainTabs"
@@ -51,5 +52,6 @@ export default function Navigation() {
     </Stack.Navigator>
     ) : (
         <AuthStack />
-    );
+    )
+  )
 }

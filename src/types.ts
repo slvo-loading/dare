@@ -9,7 +9,6 @@ export type RootStackParamList = {
 };
 
 export type MainTabParamList = {
-  MatchmakingStack: NavigatorScreenParams<MatchmakingStackParamList>;
   Leaderboard: NavigatorScreenParams<LeaderboardTabsParamList>;
   BattleStack: NavigatorScreenParams<BattleStackParamList>;
   Profile: NavigatorScreenParams<ProfileStackParamList>;
@@ -21,19 +20,16 @@ export type OnboardingStackParamList = {
     Step3: undefined;
   };
 
-export type MatchmakingStackParamList = {
-    HabitSelection: undefined;
-    HabitConfig:  { type: string };
-    OpponentSelection: undefined;
-    InviteFriend: undefined;
-    Matchmaking: undefined;
-    GameStart: { type: string; opponentId: string; };
-}
-
 export type BattleStackParamList = {
     BattleScreen: undefined;
     ResponseScreen: { battleId: string; turn: boolean; };
     SubmitScreen: { battleId: string; };
+
+    HabitConfig:  { type: string; };
+    OpponentSelection: undefined;
+    InviteFriend: { dare: string};
+    Matchmaking: undefined;
+    GameStart: { type: string; opponentId: string; };
 }
 
 export type LeaderboardTabsParamList = {
@@ -59,12 +55,6 @@ NativeStackScreenProps<OnboardingStackParamList, T>;
 export type TabScreenProps<T extends keyof MainTabParamList> = 
   BottomTabScreenProps<MainTabParamList, T>;
 
-export type MatchmakingStackProps<T extends keyof MatchmakingStackParamList> = 
-  CompositeScreenProps<
-    NativeStackScreenProps<MatchmakingStackParamList, T>,
-    NativeStackScreenProps<RootStackParamList>
-  >;
-
   export type BattleStackProps<T extends keyof BattleStackParamList> = 
   CompositeScreenProps<
     NativeStackScreenProps<BattleStackParamList, T>,
@@ -79,12 +69,12 @@ export type MatchmakingStackProps<T extends keyof MatchmakingStackParamList> =
 
 export type ProfileStackProps<T extends keyof ProfileStackParamList> = 
 CompositeScreenProps<
-  BottomTabScreenProps<ProfileStackParamList, T>,
+  NativeStackScreenProps<ProfileStackParamList, T>,
   NativeStackScreenProps<RootStackParamList>
 >;
 
 export type GameStartScreenProps = CompositeScreenProps<
-  NativeStackScreenProps<MatchmakingStackParamList, 'GameStart'>,
+  NativeStackScreenProps<BattleStackParamList, 'GameStart'>,
   CompositeScreenProps<
     BottomTabScreenProps<MainTabParamList>,
     NativeStackScreenProps<RootStackParamList>

@@ -5,7 +5,7 @@ import { ProfileStackProps } from '../../types';
 
 export default function ProfileScreen({ navigation }: ProfileStackProps<'ProfileScreen'>) {
 
-  const { logout } = useAuth();
+  const { logout, tempLogout } = useAuth();
 
   const resetOnboarding = async () => {
     try {
@@ -19,7 +19,6 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   return (
     <View>
       <Text>👤 Profile Screen</Text>
-      <Button title="Sign Out" onPress={logout} />
       <Button title="Reset Onboarding" onPress={resetOnboarding} />
       <Button
         title="Friends List"
@@ -33,6 +32,13 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
         title="Edit Profile"
         onPress={() => navigation.navigate('EditProfileScreen')}
       />
+      <Button 
+        title="Temporary Logout"
+        onPress={() => {
+          tempLogout();
+        }}
+        />
+        <Button title="Sign Out" onPress={logout} />
     </View>
   );
 };

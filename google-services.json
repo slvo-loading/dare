@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "646217173104",
+    "project_id": "dare-454c8",
+    "storage_bucket": "dare-454c8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:646217173104:android:16b20b4be473b8e11bccb5",
+        "android_client_info": {
+          "package_name": "com.dare.dare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "646217173104-4aphfpebcrserhdog2gikmd9bonb5u2e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dare.dare",
+            "certificate_hash": "329b3f6b6b826d0fe4ce2423894ae4358362bd1a"
+          }
+        },
+        {
+          "client_id": "646217173104-d12v90ea999m4gk574it7vjpe957bmnm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGgH-1bpHBoPqR_fT3IHHBU0lwcTEJ79c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "646217173104-d12v90ea999m4gk574it7vjpe957bmnm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "646217173104-oudm2g2e9ismm51bpppciefhnd8944o9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dare.dareapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
