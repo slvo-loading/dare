@@ -70,7 +70,7 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
     });
 
     socketClient.on('opponent_declined', () => {
-      console.log('Opponent declined the match');
+      socketClient.emit('decline_match');
     });
 
     socketClient.on('start_game', async (response) => {
