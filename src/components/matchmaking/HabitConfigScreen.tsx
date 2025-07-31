@@ -22,36 +22,12 @@ type GameStartRouteProp = RouteProp<
 export default function HabitConfigScreen({ navigation }: BattleStackProps<'HabitConfig'>) {
   const route = useRoute<GameStartRouteProp>();
   const { type } = route.params;
-
   const [dare, setDare] = useState('');
   const { tempUser } = useAuth();
   
-    const handleSubmit = async () => {
-      try {
-        if (!dare.trim()) {
-          Alert.alert("Please enter a dare!");
-          return;
-        }
-  
-        await addDoc(collection(db, "matchmaking_queue"), {
-          user: tempUser.uid,
-          status: 'waiting',
-          text: dare,
-          timestamp: new Date(),
-        });
-  
-        Alert.alert("Dare submitted!");
-        setDare('');
-        navigation.navigate('Matchmaking')
-      } catch (error) {
-        console.error("Error adding document: ", error);
-        Alert.alert("Error submitting dare.");
-      }
-    };
-  
 
   return (
-<View style={{ padding: 16 }}>
+    <View style={{ padding: 16 }}>
       <Text>Rules: (make this into a modal)</Text>
       <Text>1. Keep it Clean: No inappropriate, violent, or harmful dares. Be respectful and kind!
         2. Streak = Strength: Whoever keeps their streak the longest without skipping a dare wins!
@@ -72,7 +48,13 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
         <Button title="Submit" 
         onPress={() => navigation.navigate('InviteFriend', { dare: dare })} />
       ) : (
-        <Button title="Submit Dare" onPress={handleSubmit} />
+        <Button title="Submit Dare" onPress={() => navigation.navigate('Matchmaking', 
+          { dare: 
+            { userName: tempUser.displayName,
+              userId: tempUser.uid,
+              dare: dare,
+            }}
+        )} />
       )}
     </View>
   );

@@ -28,8 +28,8 @@ export type BattleStackParamList = {
     HabitConfig:  { type: string; };
     OpponentSelection: undefined;
     InviteFriend: { dare: string};
-    Matchmaking: undefined;
-    GameStart: { type: string; opponentId: string; };
+    Matchmaking: { dare: { userName: string, userId: string, dare: string }};
+    GameStart: { type: string; match: { opponentName: string, opponentId: string, dare: string} };
 }
 
 export type LeaderboardTabsParamList = {
