@@ -11,7 +11,7 @@ import {
   getDocs, 
   doc, 
   getDoc,
-  setDoc,
+  addDoc,
   Timestamp,
 } from 'firebase/firestore';
 
@@ -108,25 +108,21 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
   const sendInvite = async (friendId: string, friendName: string) => {
     if(!user) return;
 
-    const id = [user.uid, friendId].sort().join("_");
-    const ref = doc(db, 'games', id);
-
-    await setDoc(ref, {
-      player1Id: user.uid,
-      player2Id: friendId,
-      dareFromPlayer1: dare,
-      dareFromPlayer2: 'pending',
+    await addDoc(collection(db, 'games'), {
+      player1_id: user.uid,
+      player2_id: friendId,
+      player1_dare: dare,
+      player2_dare: 'pending',
       status: 'pending',
-      startDate: Timestamp.now(),
-      endDate: null,
-      winner: null
+      start_date: Timestamp.now(),
+      updated_at: Timestamp.now(),
     });
 
     navigation.navigate('GameStart', { 
       type: 'friend', 
       match: {
-        opponentName: friendId,
-        opponentId: friendName,
+        opponentName: friendName,
+        opponentId: friendId,
         dare: 'pending',
       }
     });

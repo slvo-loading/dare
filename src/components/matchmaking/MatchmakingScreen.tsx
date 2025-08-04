@@ -3,7 +3,7 @@ import { BattleStackProps } from "../../types";
 import React, { useState, useEffect, useRef } from "react";
 import {io, Socket } from 'socket.io-client';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
 
 type MatchData = {
@@ -162,18 +162,14 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
     : {player1Id:string, player2Id: string, dareFromPlayer1: string, dareFromPlayer2: string}) => {
     console.log("Creating game with:", { player1Id, player2Id, dareFromPlayer1, dareFromPlayer2 });
     
-    const id = [player1Id, player2Id].sort().join("_");
-    const ref = doc(db, 'games', id);
-    
-    await setDoc(ref, {
-      player1Id,
-      player2Id,
-      dareFromPlayer1,
-      dareFromPlayer2,
+    await addDoc(collection(db, "games"), {
+      player1_id: player1Id,
+      player2_id: player2Id,
+      player1_dare: dareFromPlayer1,
+      player2_dare: dareFromPlayer2,
       status: 'active',
-      startDate: Timestamp.now(),
-      endDate: null,
-      winner: null
+      start_date: Timestamp.now(),
+      updated_at: Timestamp.now(),
     });
   };
 
