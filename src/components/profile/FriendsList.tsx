@@ -23,7 +23,7 @@ type Friend = {
     name: string;
     status: string;
     last_active: any;
-  };
+};
 
 export default function FriendsList({ navigation }: ProfileStackProps<'FriendsList'>) {
     const { user } = useAuth();
@@ -279,11 +279,6 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
                 </View>
             ))}
         </ScrollView>
-        <Button title="1234" onPress={() => navigation.navigate('OtherProfiles', { userId: '1234'})} />
-        <Button title="2345" onPress={() => navigation.navigate('OtherProfiles', { userId: '2345'})} />
-        <Button title="3456" onPress={() => navigation.navigate('OtherProfiles', { userId: '3456'})} />
-        <Button title="4567" onPress={() => navigation.navigate('OtherProfiles', { userId: '4567'})} />
-
     </View>
   );
 }

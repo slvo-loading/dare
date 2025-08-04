@@ -6,7 +6,7 @@ import { CommonActions } from '@react-navigation/native';
 
 type GameStartRouteParams = {
   type: string;
-  opponentId: string;
+  match: {opponentId: string, opponentName: string, dare: string}
 };
 
 type GameStartRouteProp = RouteProp<
@@ -16,7 +16,7 @@ type GameStartRouteProp = RouteProp<
 
 export default function GameStart({ navigation }: GameStartScreenProps) {
   const route = useRoute<GameStartRouteProp>();
-  const { type, opponentId } = route.params;
+  const { type, match } = route.params;
 
   const goToBattleScreen = () => {
     navigation.reset({
@@ -28,9 +28,9 @@ export default function GameStart({ navigation }: GameStartScreenProps) {
   return (
     <View>
       {type === 'friend' ? (
-        <Text>We've sent your invite to {opponentId}. Wait for the to accept to start your game.</Text>
+        <Text>We've sent your invite to {match.opponentName}. Wait for them to accept to start your game.</Text>
       ) : (
-        <Text>Your game with {opponentId} begins now!</Text>
+        <Text>Your game with {match.opponentName} begins now!</Text>
       )}
       <Button
         title="Next"

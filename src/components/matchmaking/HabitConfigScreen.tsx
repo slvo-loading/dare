@@ -2,11 +2,8 @@
 import { BattleStackProps } from "../../types";
 import React, { useState } from "react";
 import { View, TextInput, Button, Alert, Text } from 'react-native';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../../firebaseConfig'; // adjust the path
 import { useAuth } from '../../context/AuthContext';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import InviteFriendScreen from "./InviteFriendScreen";
 
 type HabitConfigRouteParams = {
   type: string;
@@ -44,7 +41,7 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
           marginBottom: 12,
         }}
       />
-      {type === 'friend_request' ? (
+      {type === 'friend_requests' ? (
         <Button title="Submit" 
         onPress={() => navigation.navigate('InviteFriend', { dare: dare })} />
       ) : (

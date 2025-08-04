@@ -14,7 +14,7 @@ type OtherProfilesRouteProp = RouteProp<
     'OtherProfiles'
 >;
 
-export default function OtherProfiles() {
+export default function OtherProfiles({ navigation }: {navigation: any}) {
   const route = useRoute<OtherProfilesRouteProp>();
   const [userProfile, setUserProfile] = useState(route.params.userId); // is just uid for now
   const [friendStatus, setFriendStatus] = useState<string | null>(null); // "none", "pending", "accepted", or "incoming"
@@ -101,6 +101,7 @@ export default function OtherProfiles() {
         <ActivityIndicator/>
       ) : (
         <View>
+          <Button title="Back" onPress={() => navigation.goBack()}/>
           <Text>other Profiles {userProfile}</Text>
           {friendStatus === "active" ? (
             <Button title="Unfriend" onPress={declineFriendRequest}/>
