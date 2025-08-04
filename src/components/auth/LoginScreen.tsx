@@ -15,6 +15,8 @@ export default function LoginScreen() {
   const recaptchaVerifier = useRef(null);
   const [message, setMessage] = useState<string>("");
   const { tempLogin } = useAuth();
+  const [uid, setUid] = useState<string>('');
+  const [userName, setUserName] = useState<string>('');
 
   const sendVerification = async () => {
     try {
@@ -95,10 +97,32 @@ export default function LoginScreen() {
       <Text style={{ marginTop: 20 }}>{message}</Text>
       <AppleSignInButton />
       <GoogleSignInButton/>
+      <TextInput
+        value={uid}
+        onChangeText={setUid}
+        placeholder="Enter your uid"
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          padding: 12,
+          marginBottom: 12,
+        }}
+      />
+        <TextInput
+        value={userName}
+        onChangeText={setUserName}
+        placeholder="Enter your username"
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          padding: 12,
+          marginBottom: 12,
+        }}
+      />
       <Button
         title="Temporary Login"
         onPress={() => {
-          tempLogin();
+          tempLogin({uid: uid, userName: userName});
         }}
       />
     </View>

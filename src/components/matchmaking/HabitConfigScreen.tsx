@@ -23,7 +23,7 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
   const route = useRoute<GameStartRouteProp>();
   const { type } = route.params;
   const [dare, setDare] = useState('');
-  const { tempUser } = useAuth();
+  const { user } = useAuth();
   
 
   return (
@@ -48,13 +48,20 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
         <Button title="Submit" 
         onPress={() => navigation.navigate('InviteFriend', { dare: dare })} />
       ) : (
-        <Button title="Submit Dare" onPress={() => navigation.navigate('Matchmaking', 
-          { dare: 
-            { userName: tempUser.displayName,
-              userId: tempUser.uid,
-              dare: dare,
-            }}
-        )} />
+        user ? ( // Check if user is not null
+          <Button 
+            title="Submit Dare" 
+            onPress={() => navigation.navigate('Matchmaking', { 
+              dare: {
+                userName: user.userName || 'user',
+                userId: user.uid,
+                dare: dare,
+              }
+            })} 
+          />
+        ) : (
+          <Text>Please log in to submit a dare.</Text> // Fallback if user is null
+        )
       )}
     </View>
   );

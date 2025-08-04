@@ -3,6 +3,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../types';
+import { db } from '../../firebaseConfig'; 
+import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 import FriendsList from '../components/profile/FriendsList';
@@ -39,8 +41,27 @@ export default function Navigation() {
     }} />;
   }
 
+
+  // update last active timestamp when user logs in or navigates
+  // useEffect(() => {
+  //   if (user?.uid) {
+  //     const updateLastActive = async () => {
+  //       try {
+  //         const userRef = doc(db, "users", user.uid);
+  //         await updateDoc(userRef, {
+  //           last_active: serverTimestamp(),
+  //         });
+  //       } catch (err) {
+  //         console.error("Error updating last active:", err);
+  //       }
+  //     };
+  
+  //     updateLastActive();
+  //   }
+  // }, [user?.uid]);
+
   return (
-    session ? (
+    user ? (
     <Stack.Navigator>
         <Stack.Screen
         name="MainTabs"
