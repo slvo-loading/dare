@@ -46,28 +46,19 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
 
     await addDoc(submissionsRef, submissionData);
 
+    const battleSnap = await getDoc(battleRef);
+    const battleData = battleSnap.data();
+    const player1 = user.uid === battleData?.player1_id;
+    await updatedoc(battleRef, {
+      [`${player1 ? "player1_last_submission" : "player2_last_submission"}`]: serverTimestamp()
+    });
+
     try {
-
       if (gameMode === 'survival') {
-        const battleSnap = await getDoc(battleRef);
-        const battleData = battleSnap.data();
-        const player1 = user.uid === battleData?.player1_id;
-
-        // removes the dare from the players to do array
         await updateDoc(battleRef, {
-          [`${player1 ? "player2_dare" : "player1_dare"}`]: arrayRemove(dare)
-        });
-
-        // appends new dare to the players giving array
-        // const currentArray = battleData?.[player1 ? 'player1_dare' : 'player2_dare'];
-        // currentArray.push(newDare);
-        // await updateDoc(battleRef, {
-        //   [`${player1 ? "player1_dare" : "player2_dare"}`]: currentArray
-        // })
-        await updateDoc(battleRef, {
+          [`${player1 ? "player2_dare" : "player1_dare"}`]: arrayRemove(dare),
           [`${player1 ? "player1_dare" : "player2_dare"}`]: arrayUnion(newDare)
         });
-
       }
 
       setNewDare('');
