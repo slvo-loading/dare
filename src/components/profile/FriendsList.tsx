@@ -1,4 +1,4 @@
-import { View, Text, Button, ScrollView, TouchableOpacity, Image } from "react-native";
+import { View, Text, Button, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Alert } from "react-native";
 import { ProfileStackProps } from '../../types';
 import { 
     collection, 
@@ -29,6 +29,16 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
     const { user } = useAuth();
     const [friendsList, setFriendsList] = useState<Friend[]>([]);
     const [pendingRequests, setPendingRequests] = useState<Friend[]>([]);
+    const [searchUid, setSearchUid] = useState<string>('');
+    const [searchLoading, setSearchLoading] = useState<boolean>(false);
+    const [searchUser, setSearchUser] = useState<Friend>({
+        uid: '', 
+        userName: '',
+        avatarUrl: '',
+        name: '',
+        status: 'none',
+        last_active: null,
+    });
 
     useEffect(() => {
         fetchFriends();
@@ -216,6 +226,47 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
         console.log('Friends List:', friendsList);
     }, [friendsList]);
 
+    const handleSearchUid = async (enteredUid: string) => {
+        if (!user) {
+            console.log("User not authenticated.");
+            return;
+        }
+        
+        if(!enteredUid.trim()) {
+            console.log("Please enter a valid UID.");
+            return;
+        }
+
+        console.log("Searching for user with UID:", enteredUid);
+        
+        setSearchLoading(true);
+        const usersRef = doc(db, "users", enteredUid);
+        const userDoc = await getDoc(usersRef);
+
+        if (!userDoc.exists()) {
+            console.log("No user found with this UID.");
+            setSearchLoading(false);
+            return;
+        }
+        const userData = userDoc.data();
+
+        const id = [user.uid, enteredUid].sort().join("_");
+        const ref = doc(db, 'friends', id);
+        const snapshot = await getDoc(ref);
+        const status = snapshot.exists() ? snapshot.data().status : 'none';
+
+        setSearchUser({
+            uid: userDoc.id,
+            userName: userData.username,
+            avatarUrl: userData.avatar_url,
+            name: userData.name,
+            status: status,
+            last_active: userData.last_active,
+        });
+        setSearchLoading(false);
+        setSearchUid('');
+    }
+
 
   return (
     <View>
@@ -279,10 +330,46 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
                 </View>
             ))}
         </ScrollView>
-        <Button title="1234" onPress={() => navigation.navigate('OtherProfiles', { userId: '1234' })} />
-        <Button title="2345" onPress={() => navigation.navigate('OtherProfiles', { userId: '2345' })} />
-        <Button title="3456" onPress={() => navigation.navigate('OtherProfiles', { userId: '3456' })} />
-        <Button title="4567" onPress={() => navigation.navigate('OtherProfiles', { userId: '4567' })} />
+        <Text>Search for a friend</Text>
+        <TextInput
+            value={searchUid}
+            onChangeText={setSearchUid}
+            placeholder="Search for a friend by UID"
+            style={{
+                borderWidth: 1,
+                borderColor: '#ccc',
+                padding: 12,
+                marginBottom: 12,
+            }}
+        />
+        <Button title="Search for friends" onPress={() => {handleSearchUid(searchUid)}}/>
+        {!searchLoading ? (
+        <View key={searchUser.uid} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <TouchableOpacity onPress={() => onViewProfile(searchUser.uid)}>
+                <Image
+                source={{ uri: searchUser.avatarUrl }}
+                style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
+                />
+            </TouchableOpacity>
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => onViewProfile(searchUser.uid)}>
+                <Text style={{ fontWeight: 'bold' }}>{searchUser.userName}</Text>
+                <Text style={{ color: '#666' }}>{searchUser.name}</Text>
+            </TouchableOpacity>
+            {searchUser.status === 'active'? (
+                <TouchableOpacity onPress={() => unfriendUser(searchUser.uid)}>
+                <Text style={{ color: 'red' }}>Unfriend</Text>
+                </TouchableOpacity>
+            ) : searchUser.status === 'pending'? (
+                <TouchableOpacity onPress={() => unfriendUser(searchUser.uid)}>
+                <Text style={{ color: 'blue' }}>Pending</Text>
+                </TouchableOpacity>
+            ) : (
+                <TouchableOpacity onPress={() => sendFriendRequest(searchUser.uid)}>
+                <Text style={{ color: 'blue' }}>Friend</Text>
+                </TouchableOpacity>
+            )}
+        </View>
+        ): ( <ActivityIndicator size="large" color="#0000ff" /> )}
     </View>
   );
 }
