@@ -24,7 +24,8 @@ type Battle =
   opponentName: string,
   avatarUrl: string,
   users_dare: string,
-  status: string
+  status: string, 
+  gameMode: string,
 }
 
 export default function BattleScreen({ navigation }: BattleStackProps<'BattleScreen'>) {
@@ -58,11 +59,12 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
         battles.push({
           battleId: doc.id,
           opponentId: data.player2_id,
-          users_dare: data.player2_dare,
+          users_dare: data.player2_dare[0] || 'Waiting for dare',
           updated_at: data.updated_at,
           status: data.status,
           opponentName: '',
-          avatarUrl: ''
+          avatarUrl: '',
+          gameMode: data.game_mode
         });
       });
   
@@ -71,11 +73,12 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
         battles.push({
           battleId: doc.id,
           opponentId: data.player1_id,
-          users_dare: data.player1_dare,
+          users_dare: data.player1_dare[0] || 'Waiting for dare',
           updated_at: data.updated_at,
           status: data.status,
           opponentName: '',
-          avatarUrl: ''
+          avatarUrl: '',
+          gameMode: data.game_mode
         });
       });
 
@@ -133,11 +136,12 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
         battles.push({
           battleId: doc.id,
           opponentId: data.player1_id,
-          users_dare: data.player1_dare,
+          users_dare: data.player1_dare[0] || 'Waiting for dare',
           updated_at: data.updated_at,
           status: data.status,
           opponentName: '',
-          avatarUrl: ''
+          avatarUrl: '',
+          gameMode: data.game_mode
         });
       });
 
@@ -213,11 +217,12 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
         battles.push({
           battleId: doc.id,
           opponentId: data.player2_id,
-          users_dare: data.player1_dare,
+          users_dare: data.player1_dare[0] || 'Waiting for dare',
           updated_at: data.updated_at,
           status: data.status,
           opponentName: '',
-          avatarUrl: ''
+          avatarUrl: '',
+          gameMode: data.game_mode
         });
       });
 
@@ -327,7 +332,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
               <Text style={{ color: '#666' }}>{battle.opponentName}</Text>
           </TouchableOpacity>
           <Text style={{ color: '#666', marginRight: 10 }}>{battle.users_dare}</Text>
-          <Button title="Battle" onPress={() => navigation.navigate("ResponseScreen", {battleId: battle.battleId, turn: true})}/>
+          <Button title="Battle" onPress={() => navigation.navigate("ResponseScreen", {battleId: battle.battleId, dare: battle.users_dare, gameMode: battle.gameMode})}/>
           </View>
       ))}
   </ScrollView>

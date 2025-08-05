@@ -26,13 +26,13 @@ export type AuthStackParamList = {
 
 export type BattleStackParamList = {
     BattleScreen: undefined;
-    ResponseScreen: { battleId: string; turn: boolean; };
-    SubmitScreen: { battleId: string; };
+    ResponseScreen: { battleId: string; dare: string; gameMode: string };
+    SubmitScreen: { uri: string; battleId: string; dare: string; gameMode: string;};
 
     HabitConfig:  { type: string; };
     OpponentSelection: undefined;
-    InviteFriend: { dare: string};
-    Matchmaking: { dare: { userName: string, userId: string, dare: string }};
+    InviteFriend: { dare: string, gameMode: string};
+    Matchmaking: { dare: { userName: string, userId: string, dare: string }, gameMode: string};
     GameStart: { type: string; match: { opponentName: string, opponentId: string, dare: string} };
 }
 

@@ -24,7 +24,7 @@ type Friend = {
 };
 
 type InviteScreenRouteProp = RouteProp<
-  { InviteFriend: { dare: { userName: string, userId: string, dare: string} } },
+  { InviteFriend: { dare: string, gameMode: string } },
   'InviteFriend'
 >;
 
@@ -35,6 +35,7 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const route = useRoute<InviteScreenRouteProp>();
   const [dare, setDare] = useState(route.params.dare);
+  const gameMode = route.params.gameMode; 
 
   useEffect(() => {
     fetchFriends();
@@ -111,9 +112,10 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
     await addDoc(collection(db, 'games'), {
       player1_id: user.uid,
       player2_id: friendId,
-      player1_dare: dare,
-      player2_dare: 'pending',
+      player1_dare: [dare],
+      player2_dare: [],
       status: 'pending',
+      game_mode: gameMode,
       start_date: Timestamp.now(),
       updated_at: Timestamp.now(),
     });
@@ -123,7 +125,7 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
       match: {
         opponentName: friendName,
         opponentId: friendId,
-        dare: 'pending',
+        dare: '',
       }
     });
   }

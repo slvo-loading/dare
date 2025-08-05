@@ -6,11 +6,11 @@ import { CameraView, CameraType, useCameraPermissions, CameraMode } from 'expo-c
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { Image } from "expo-image";
 
 type ResponseRouteParams = {
     battleId: string;
-    turn: boolean;
+    dare: string;
+    gameMode: string;
 };
   
 type ResponseRouteProp = RouteProp<
@@ -21,11 +21,10 @@ type ResponseRouteProp = RouteProp<
 
 export default function ResponseScreen({ navigation }: BattleStackProps<'ResponseScreen'>) {
   const route = useRoute<ResponseRouteProp>();
-  const { battleId, turn } = route.params;
+  const { gameMode, battleId, dare } = route.params;
 
   const [permission, requestPermission] = useCameraPermissions();
   const ref = useRef<CameraView>(null);
-  const [uri, setUri] = useState<string | null>(null);
   const [mode, setMode] = useState<CameraMode>("picture");
   const [facing, setFacing] = useState<CameraType>("back");
   const [recording, setRecording] = useState(false);
@@ -45,17 +44,15 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
     );
   }
 
-  function toggleCameraFacing() {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
-  }
-
   const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync();
     if (photo) {
-      setUri(photo?.uri);
+      navigation.navigate('SubmitScreen', {uri: photo.uri, battleId: battleId, dare: dare, gameMode: gameMode})
     }
   };
 
+
+  // need to work on recording to be only 15 sec + progress bar
   const recordVideo = async () => {
     if (recording) {
       setRecording(false);
@@ -75,20 +72,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
 
-  const renderPicture = () => {
-    if(!uri) return null;
 
-    return (
-      <View>
-        <Image
-          source={{ uri }}
-          contentFit="contain"
-          style={{ width: 300, aspectRatio: 1 }}
-        />
-        <Button onPress={() => setUri(null)} title="Take another picture" />
-      </View>
-    );
-  };
 
   const renderCamera = () => {
     return (
@@ -101,6 +85,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
         responsiveOrientationWhenOrientationLocked
       >
         <View style={styles.shutterContainer}>
+          <Text style={styles.dareText}>{dare}</Text>
           <Pressable onPress={toggleMode}>
             {mode === "picture" ? (
               <AntDesign name="picture" size={32} color="white" />
@@ -140,7 +125,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
 
   return (
     <View style={styles.container}>
-    {uri ? renderPicture() : renderCamera()}
+    {dare ? renderCamera() : <View></View>}
   </View>
   );
 }
@@ -181,5 +166,11 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 50,
+  },
+  dareText: {
+    color: 'white', 
+    fontSize: 20,
+    textAlign: 'center', 
+    marginTop: 20, 
   },
 });

@@ -19,7 +19,8 @@ type GameStartRouteProp = RouteProp<
 export default function HabitConfigScreen({ navigation }: BattleStackProps<'HabitConfig'>) {
   const route = useRoute<GameStartRouteProp>();
   const { type } = route.params;
-  const [dare, setDare] = useState('');
+  const [dare, setDare] = useState<string>('');
+  const [gameMode, setGameMode] = useState<string>('');
   const { user } = useAuth();
   
 
@@ -29,6 +30,12 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
       <Text>1. Keep it Clean: No inappropriate, violent, or harmful dares. Be respectful and kind!
         2. Streak = Strength: Whoever keeps their streak the longest without skipping a dare wins!
         3. Have Fun: Be silly, be brave, and enjoy the chaos 💥</Text>
+      <Button title="Select Survival Mode" onPress={() => setGameMode('survival')}/>
+      <Text>Survival Mode is where you send each other a different dare everyday</Text>
+      <Text>or</Text>
+      <Button title="Select Continuous Mode" onPress={() => setGameMode('continuous')}/>
+      <Text>Continuous Mode is where you both keep up your initial dares to each other</Text>
+      <Text></Text>
       <Text>I dare you to ...</Text>
       <TextInput
         value={dare}
@@ -43,7 +50,7 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
       />
       {type === 'friend_requests' ? (
         <Button title="Submit" 
-        onPress={() => navigation.navigate('InviteFriend', { dare: dare })} />
+        onPress={() => navigation.navigate('InviteFriend', { dare: dare, gameMode: gameMode })} />
       ) : (
         user ? ( // Check if user is not null
           <Button 
@@ -53,7 +60,8 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
                 userName: user.userName || 'user',
                 userId: user.uid,
                 dare: dare,
-              }
+              },
+              gameMode: gameMode,
             })} 
           />
         ) : (

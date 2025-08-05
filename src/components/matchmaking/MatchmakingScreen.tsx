@@ -14,13 +14,14 @@ type MatchData = {
 }
 
 type MatchmakingScreenRouteProp = RouteProp<
-  { Matchmaking: { dare: { userName: string, userId: string, dare: string} } },
+  { Matchmaking: { dare: { userName: string, userId: string, dare: string}, gameMode: string } },
   'Matchmaking'
 >;
 
 export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matchmaking'>) {
   const route = useRoute<MatchmakingScreenRouteProp>();
   const [dare, setDare] = useState(route.params.dare);
+  const gameMode = route.params.gameMode; 
 
   const [status, setStatus] = useState('Looking for match...');
   const [match, setMatch] = useState<MatchData | null>(null);
@@ -165,9 +166,10 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
     await addDoc(collection(db, "games"), {
       player1_id: player1Id,
       player2_id: player2Id,
-      player1_dare: dareFromPlayer1,
-      player2_dare: dareFromPlayer2,
+      player1_dare: [dareFromPlayer1],
+      player2_dare: [dareFromPlayer2],
       status: 'active',
+      game_mode: gameMode,
       start_date: Timestamp.now(),
       updated_at: Timestamp.now(),
     });
