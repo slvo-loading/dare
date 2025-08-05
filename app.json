@@ -45,12 +45,6 @@
           }
         }
       ],
-      [
-        "expo-firebase-core",
-        {
-          "plistPath": "./GoogleService-Info.plist"
-        }
-      ],
       "expo-secure-store"
     ],
     "extra": {

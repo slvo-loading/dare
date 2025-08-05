@@ -31,14 +31,7 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
     const [pendingRequests, setPendingRequests] = useState<Friend[]>([]);
     const [searchUid, setSearchUid] = useState<string>('');
     const [searchLoading, setSearchLoading] = useState<boolean>(false);
-    const [searchUser, setSearchUser] = useState<Friend>({
-        uid: '', 
-        userName: '',
-        avatarUrl: '',
-        name: '',
-        status: 'none',
-        last_active: null,
-    });
+    const [searchUser, setSearchUser] = useState<Friend | null>(null);
 
     useEffect(() => {
         fetchFriends();
@@ -344,31 +337,37 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
         />
         <Button title="Search for friends" onPress={() => {handleSearchUid(searchUid)}}/>
         {!searchLoading ? (
-        <View key={searchUser.uid} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <TouchableOpacity onPress={() => onViewProfile(searchUser.uid)}>
-                <Image
-                source={{ uri: searchUser.avatarUrl }}
-                style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
-                />
-            </TouchableOpacity>
-            <TouchableOpacity style={{ flex: 1 }} onPress={() => onViewProfile(searchUser.uid)}>
-                <Text style={{ fontWeight: 'bold' }}>{searchUser.userName}</Text>
-                <Text style={{ color: '#666' }}>{searchUser.name}</Text>
-            </TouchableOpacity>
-            {searchUser.status === 'active'? (
-                <TouchableOpacity onPress={() => unfriendUser(searchUser.uid)}>
-                <Text style={{ color: 'red' }}>Unfriend</Text>
-                </TouchableOpacity>
-            ) : searchUser.status === 'pending'? (
-                <TouchableOpacity onPress={() => unfriendUser(searchUser.uid)}>
-                <Text style={{ color: 'blue' }}>Pending</Text>
-                </TouchableOpacity>
+            <View>
+            {searchUser ? (
+                <View key={searchUser.uid} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                    <TouchableOpacity onPress={() => onViewProfile(searchUser.uid)}>
+                        <Image
+                        source={{ uri: searchUser.avatarUrl }}
+                        style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ flex: 1 }} onPress={() => onViewProfile(searchUser.uid)}>
+                        <Text style={{ fontWeight: 'bold' }}>{searchUser.userName}</Text>
+                        <Text style={{ color: '#666' }}>{searchUser.name}</Text>
+                    </TouchableOpacity>
+                    {searchUser.status === 'active'? (
+                        <TouchableOpacity onPress={() => unfriendUser(searchUser.uid)}>
+                        <Text style={{ color: 'red' }}>Unfriend</Text>
+                        </TouchableOpacity>
+                    ) : searchUser.status === 'pending'? (
+                        <TouchableOpacity onPress={() => unfriendUser(searchUser.uid)}>
+                        <Text style={{ color: 'blue' }}>Pending</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity onPress={() => sendFriendRequest(searchUser.uid)}>
+                        <Text style={{ color: 'blue' }}>Friend</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             ) : (
-                <TouchableOpacity onPress={() => sendFriendRequest(searchUser.uid)}>
-                <Text style={{ color: 'blue' }}>Friend</Text>
-                </TouchableOpacity>
+                <Text></Text>
             )}
-        </View>
+            </View>
         ): ( <ActivityIndicator size="large" color="#0000ff" /> )}
     </View>
   );

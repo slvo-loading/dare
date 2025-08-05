@@ -327,7 +327,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
               <Text style={{ color: '#666' }}>{battle.opponentName}</Text>
           </TouchableOpacity>
           <Text style={{ color: '#666', marginRight: 10 }}>{battle.users_dare}</Text>
-          <Button title="Battle"/>
+          <Button title="Battle" onPress={() => navigation.navigate("ResponseScreen", {battleId: battle.battleId, turn: true})}/>
           </View>
       ))}
   </ScrollView>

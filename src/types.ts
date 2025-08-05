@@ -20,6 +20,10 @@ export type OnboardingStackParamList = {
     Step3: undefined;
   };
 
+export type AuthStackParamList = {
+  Login: undefined;
+}
+
 export type BattleStackParamList = {
     BattleScreen: undefined;
     ResponseScreen: { battleId: string; turn: boolean; };
@@ -79,4 +83,9 @@ export type GameStartScreenProps = CompositeScreenProps<
     BottomTabScreenProps<MainTabParamList>,
     NativeStackScreenProps<RootStackParamList>
   >
+>;
+
+export type LoginScreenProps = CompositeScreenProps<
+  NativeStackScreenProps<AuthStackParamList, 'Login'>,
+  NativeStackScreenProps<RootStackParamList>
 >;

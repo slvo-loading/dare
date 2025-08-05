@@ -6,7 +6,7 @@ import { auth, app } from "../../../firebaseConfig";
 import { PhoneAuthProvider, signInWithCredential, signInWithPhoneNumber } from 'firebase/auth';
 import GoogleSignInButton from './GoogleSignInButton';
 import AppleSignInButton from './AppleSignInButton';
-
+import { LoginScreenProps } from '../../types';
 
 export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState<string>("");
