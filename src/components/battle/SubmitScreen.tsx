@@ -1,4 +1,4 @@
-import { View, Text, Button, TextInput } from "react-native";
+import { SafeAreaView, View, Text, Button, TextInput } from "react-native";
 import { BattleStackProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
@@ -49,9 +49,11 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
     const battleSnap = await getDoc(battleRef);
     const battleData = battleSnap.data();
     const player1 = user.uid === battleData?.player1_id;
-    await updatedoc(battleRef, {
+    console.log("Player 1:", player1);
+    await updateDoc(battleRef, {
       [`${player1 ? "player1_last_submission" : "player2_last_submission"}`]: serverTimestamp()
     });
+    console.log("updated last_submission");
 
     try {
       if (gameMode === 'survival') {
@@ -71,7 +73,7 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
   }
 
   return (
-      <View>
+      <SafeAreaView>
         <Image
           source={{ uri }}
           contentFit="contain"
@@ -108,6 +110,6 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
           title="Submit"
           onPress={handleSubmit}
         />
-      </View>
+      </SafeAreaView>
   );
 }

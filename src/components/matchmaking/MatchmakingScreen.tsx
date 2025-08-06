@@ -1,4 +1,4 @@
-import { View, Text, Button, ActivityIndicator} from "react-native";
+import { View, SafeAreaView, Text, Button, ActivityIndicator} from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { useState, useEffect, useRef } from "react";
 import {io, Socket } from 'socket.io-client';
@@ -180,7 +180,7 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
   }, [match])
 
   return (
-    <View>
+    <SafeAreaView>
       {match ? (
         <View>
           <Text style={{ fontSize: 18, marginBottom: 10 }}>
@@ -211,6 +211,6 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
           <Text style={{ marginTop: 16 }}>{status}</Text>
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 }

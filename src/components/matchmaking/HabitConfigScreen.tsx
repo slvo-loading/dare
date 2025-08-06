@@ -1,7 +1,7 @@
 
 import { BattleStackProps } from "../../types";
 import React, { useState } from "react";
-import { View, TextInput, Button, Alert, Text } from 'react-native';
+import { View, SafeAreaView, TextInput, Button, Alert, Text } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
@@ -25,7 +25,7 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
   
 
   return (
-    <View style={{ padding: 16 }}>
+    <SafeAreaView style={{ padding: 16 }}>
       <Text>Rules: (make this into a modal)</Text>
       <Text>1. Keep it Clean: No inappropriate, violent, or harmful dares. Be respectful and kind!
         2. Streak = Strength: Whoever keeps their streak the longest without skipping a dare wins!
@@ -68,6 +68,6 @@ export default function HabitConfigScreen({ navigation }: BattleStackProps<'Habi
           <Text>Please log in to submit a dare.</Text> // Fallback if user is null
         )
       )}
-    </View>
+    </SafeAreaView>
   );
 }

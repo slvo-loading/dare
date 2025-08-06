@@ -1,4 +1,4 @@
-import { View, Text, Button, ScrollView, TouchableOpacity, Image } from "react-native";
+import { SafeAreaView, View, Text, Button, ScrollView, TouchableOpacity, Image } from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { use, useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -263,7 +263,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
 
 
   return (
-    <View>
+    <SafeAreaView>
       <Button 
       title="New Battle"
       onPress={() => navigation.navigate('OpponentSelection')}/>
@@ -336,6 +336,6 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
           </View>
       ))}
   </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

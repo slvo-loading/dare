@@ -1,4 +1,4 @@
-import { View, Text, Button, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Button, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Alert, SafeAreaView } from "react-native";
 import { ProfileStackProps } from '../../types';
 import { 
     collection, 
@@ -262,7 +262,7 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
 
 
   return (
-    <View>
+    <SafeAreaView>
         <Text>Incoming requests</Text>
         <ScrollView>
             {pendingRequests
@@ -369,6 +369,6 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
             )}
             </View>
         ): ( <ActivityIndicator size="large" color="#0000ff" /> )}
-    </View>
+    </SafeAreaView>
   );
 }

@@ -1,4 +1,4 @@
-import { View, Text, Button, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
+import { View, SafeAreaView, Text, Button, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { BattleStackProps } from "../../types";
 import React, { useState, useEffect } from "react";
@@ -132,7 +132,7 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
 
 
   return (
-    <View>
+    <SafeAreaView>
       <Text>send the invite to your friend</Text>
       <ScrollView>
         {friendsList
@@ -160,6 +160,6 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
     ) : (
       <Button title="Next" onPress={() => Alert.alert("Please select a friend")}/>
     )}
-    </View>
+    </SafeAreaView>
   );
 }

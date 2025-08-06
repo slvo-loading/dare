@@ -1,4 +1,4 @@
-import { View, Text, Button } from "react-native";
+import { View, Text, Button, SafeAreaView } from "react-native";
 import { GameStartScreenProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { CommonActions } from '@react-navigation/native';
@@ -26,7 +26,7 @@ export default function GameStart({ navigation }: GameStartScreenProps) {
   }
 
   return (
-    <View>
+    <SafeAreaView>
       {type === 'friend' ? (
         <Text>We've sent your invite to {match.opponentName}. Wait for them to accept to start your game.</Text>
       ) : (
@@ -36,6 +36,6 @@ export default function GameStart({ navigation }: GameStartScreenProps) {
         title="Next"
         onPress={goToBattleScreen}
       />
-    </View>
+    </SafeAreaView>
   );
 }

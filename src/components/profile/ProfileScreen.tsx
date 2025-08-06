@@ -1,4 +1,4 @@
-import { View, Text, Button } from "react-native";
+import { View, Text, Button, SafeAreaView } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProfileStackProps } from '../../types';
@@ -17,7 +17,7 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   };
 
   return (
-    <View>
+    <SafeAreaView>
       <Text>👤 Profile Screen</Text>
       <Button title="Reset Onboarding" onPress={resetOnboarding} />
       <Button
@@ -39,6 +39,6 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
         }}
         />
         <Button title="Sign Out" onPress={logout} />
-    </View>
+    </SafeAreaView>
   );
 };
