@@ -51,7 +51,6 @@ export const checkDailySubmissions = onSchedule(
       logger.info(`  - Player 2 Last: ${player2Last}, 
         Missed: ${player2Missed}`);
 
-
       let winner: string | null = null;
 
       if (player1Missed && !player2Missed) {
