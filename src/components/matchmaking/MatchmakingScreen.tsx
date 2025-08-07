@@ -127,7 +127,7 @@ useFocusEffect(
       socketClient.off('start_game');
       socketClient.disconnect();
     };
-  }, []);
+  }, []),
   );
 
 

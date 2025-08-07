@@ -1,4 +1,6 @@
-import { View, Text, Button, SafeAreaView, Image, ScrollView, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, Button, SafeAreaView, Image, 
+  ScrollView, TouchableOpacity, TextInput, Modal, Pressable, StyleSheet
+} from "react-native";
 import { ProfileStackProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useAuth } from "../../context/AuthContext";
@@ -30,6 +32,9 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
   const [avatarUrl, setAvatarUrl] = useState(route.params.userProfile.avatarUrl);
   const [name, setName] = useState(route.params.userProfile.name);
   const [bio, setBio] = useState(route.params.userProfile.bio);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isViewingImage, setIsViewingImage] = useState(false);
+
   const { user } = useAuth();
 
   const handleSave = async () => {
@@ -52,7 +57,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
       console.error("Error updating profile:", error);
     }
   }
-
+  
   return (
     <SafeAreaView>
       <Text>Edit your profile!</Text>
@@ -61,6 +66,23 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
         source={{ uri: avatarUrl }}
         style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
         />
+          <Button title="View profile photo" onPress={() => setIsViewingImage(true)}/>
+
+          <Modal visible={isViewingImage} transparent={true}>
+            <View style={styles.modalContainer}>
+              <Image
+              source={{ uri: avatarUrl }}
+              style={styles.fullImage}
+              resizeMode="contain"
+              />
+              <Pressable onPress={() => setIsViewingImage(false)} style={styles.closeButton}>
+                <Text style={styles.closeText}>Close</Text>
+              </Pressable>
+            </View>
+          </Modal>
+
+        <Button title="Take Photo"/>
+        <Button title="Upload Photo"/>
 
         <TextInput
         value={userName}
@@ -104,5 +126,27 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
         onPress={handleSave}
       />
     </SafeAreaView>
-  );
-}
+  )}
+  
+  const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: '100%',
+    height: '80%',
+  },
+  closeButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 8,
+  },
+  closeText: {
+    color: 'black',
+    fontWeight: 'bold',
+  },
+});
