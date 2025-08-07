@@ -44,7 +44,14 @@ export type LeaderboardTabsParamList = {
 
 export type ProfileStackParamList = {
     ProfileScreen: undefined;
-    EditProfileScreen: undefined;
+    EditProfileScreen: { 
+      userProfile: {
+        userName: string | undefined;
+        avatarUrl: string | undefined;
+        name: string | undefined;
+        bio: string | undefined;
+      },
+  };
     FriendsList: undefined;
     Settings: undefined;
 }

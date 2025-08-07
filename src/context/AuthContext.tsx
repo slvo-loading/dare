@@ -82,12 +82,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!userSnap.exists()) {
         await setDoc(userDocRef, {
           username: newUser.userName,
+          name: '',
           avatar_url: '',
           bio: '',
           created_at: serverTimestamp(),
           rank: 'Unseasoned',
-          wins: 0,
-          losses: 0,
           last_active: serverTimestamp(),
         });
       }

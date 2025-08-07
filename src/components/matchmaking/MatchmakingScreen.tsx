@@ -1,10 +1,11 @@
 import { View, SafeAreaView, Text, Button, ActivityIndicator} from "react-native";
 import { BattleStackProps } from "../../types";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {io, Socket } from 'socket.io-client';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { collection, doc, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
+import { useFocusEffect } from '@react-navigation/native';
 
 type MatchData = {
   opponentName: string;
@@ -36,8 +37,8 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
     console.log('Match updated in ref:', match);
   }, [match]);
 
-
-  useEffect(() => {
+useFocusEffect(
+  useCallback(() => {
     socket.current = io('http://localhost:3001');
     const socketClient = socket.current;
     socketClient.emit('enqueue', { dare });
@@ -126,7 +127,8 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
       socketClient.off('start_game');
       socketClient.disconnect();
     };
-  }, [dare]);
+  }, []);
+  );
 
 
   useEffect(() => {

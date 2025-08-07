@@ -263,6 +263,7 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
 
   return (
     <SafeAreaView>
+        <Button title="Back" onPress={() => navigation.goBack()}/>
         <Text>Incoming requests</Text>
         <ScrollView>
             {pendingRequests

@@ -1,8 +1,9 @@
 import { SafeAreaView, View, Text, Button, ScrollView, TouchableOpacity, Image } from "react-native";
 import { BattleStackProps } from "../../types";
-import React, { use, useEffect, useState } from "react";
+import React, { use, useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../../firebaseConfig";
+import { useFocusEffect } from '@react-navigation/native';
 import { 
   collection, 
   query, 
@@ -33,10 +34,17 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   const [battleList, setBattleList] = useState<Battle[]>([]);
   const [pendingInRequests, setPendingInRequests] = useState<Battle[]>([]);
   const [pendingOutRequests, setPendingOutRequests] = useState<Battle[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchBattles();
-  }, []);
+  // refetches everything everytime you change the screen ...hmmmm
+  useFocusEffect(
+    useCallback(() => {
+      fetchBattles();
+      fetchPendingInRequests();
+      fetchPendingOutRequests();
+      setLoading(false);
+    }, [])
+  )
 
   const fetchBattles = async () => {
     if (!user) return;
@@ -114,10 +122,6 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   };
 
 
-  useEffect(() => {
-    fetchPendingInRequests();
-  }, []);
-
   const fetchPendingInRequests = async () => {
     if (!user) return;
 
@@ -172,7 +176,6 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
     }
   }
 
-
   const acceptRequest = async (battleId: string) => {
 
   const ref = doc(db, 'games', battleId);
@@ -193,11 +196,6 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   
     fetchPendingInRequests();
   };
-
-
-  useEffect(() => {
-    fetchPendingOutRequests();
-  }, []);
 
   const fetchPendingOutRequests = async () => {
     if (!user) return;
