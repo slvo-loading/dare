@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { db } from "../../../firebaseConfig";
 import { updateDoc, doc, } from "firebase/firestore";
 import React, { useState, useEffect } from "react";
+import * as ImagePicker from 'expo-image-picker';
 
 
 type EditProfileRouteParams = {
@@ -34,6 +35,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
   const [bio, setBio] = useState(route.params.userProfile.bio);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isViewingImage, setIsViewingImage] = useState(false);
+  const [imagePickerResult, setImagePickerResult] = useState<string | null>(null);
 
   const { user } = useAuth();
 
@@ -46,7 +48,6 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        avatar_url: avatarUrl,
         bio: bio,
         name: name,
         username: userName,
@@ -57,6 +58,20 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
       console.error("Error updating profile:", error);
     }
   }
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false, // We’ll handle cropping manually
+      quality: 1,
+    });
+  
+    if (!result.canceled) {
+      // TypeScript now knows that `result` is of type `ImagePickerSuccessResult`
+      navigation.navigate('CropScreen', { imageUri: result.assets[0].uri });
+    }
+  };
+  
   
   return (
     <SafeAreaView>
@@ -82,7 +97,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
           </Modal>
 
         <Button title="Take Photo"/>
-        <Button title="Upload Photo"/>
+        <Button title="Upload Photo" onPress={pickImage}/>
 
         <TextInput
         value={userName}

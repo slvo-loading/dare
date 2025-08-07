@@ -54,6 +54,7 @@ export type ProfileStackParamList = {
   };
     FriendsList: undefined;
     Settings: undefined;
+    CropScreen: { imageUri: string; };
 }
 
 
