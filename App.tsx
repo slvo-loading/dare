@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { AuthProvider } from './src/context/AuthContext';
 import Navigation from './src/navigation/Navigation';
 import { app } from './firebaseConfig'; // Import to ensure it's loaded
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
@@ -31,9 +32,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer>
           <Navigation />
         </NavigationContainer>
+        </GestureHandlerRootView>
       </AuthProvider>
       <StatusBar style="auto" />
     </SafeAreaProvider>
