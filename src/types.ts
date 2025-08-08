@@ -55,6 +55,8 @@ export type ProfileStackParamList = {
     FriendsList: undefined;
     Settings: undefined;
     CropScreen: { imageUri: string; };
+    AddInterests: undefined;
+    EditInterest: { interestId: string; caption: string; imageUri: string[]; };
 }
 
 

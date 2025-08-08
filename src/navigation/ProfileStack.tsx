@@ -4,6 +4,8 @@ import FriendsList from '../components/profile/FriendsList';
 import ProfileScreen from '../components/profile/ProfileScreen';
 import Settings from '../components/profile/Settings';
 import CropScreen from '../components/profile/CropScreen';
+import AddInterestScreen from '../components/profile/AddInterestScreen';
+import EditInterestScreen from '../components/profile/EditInterest';
 import { ProfileStackParamList } from '../types';
 
 
@@ -17,6 +19,8 @@ export default function ProfileStack() {
         <Stack.Screen name="CropScreen" component={CropScreen} />
         <Stack.Screen name="FriendsList" component={FriendsList} />
         <Stack.Screen name="Settings" component={Settings} />
+        <Stack.Screen name="AddInterests" component={AddInterestScreen} />
+        <Stack.Screen name="EditInterest" component={EditInterestScreen} />
     </Stack.Navigator>
   );
 }

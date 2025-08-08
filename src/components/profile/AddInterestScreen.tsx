@@ -1,0 +1,97 @@
+import { View, Text, Button, SafeAreaView, Image, TextInput} from "react-native";
+import { ProfileStackProps } from "../../types";
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../../../firebaseConfig";
+
+
+export default function AddInterestScreen({ navigation }: ProfileStackProps<'AddInterests'>) {
+    const[imageUri, setImageUri] = useState<string[]>([]);
+    const [caption, setCaption] = useState<string>('');
+    const { user } = useAuth();
+
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true, 
+      quality: 1,
+    });
+  
+    if (!result.canceled) {
+      // TypeScript now knows that `result` is of type `ImagePickerSuccessResult`
+      setImageUri((prevUris) => [...prevUris, result.assets[0].uri]);
+    }
+  };
+
+    const handleSave = async () => {
+      if (!user) {
+        console.error("User is not authenticated");
+        return;
+      }
+  
+      try {
+        const interestsRef = collection(db, "users", user.uid, "interests");
+        const newInterest = {
+            imageUri,
+            caption,
+            createdAt: new Date(),
+          };
+        
+        const docRef = await addDoc(interestsRef, newInterest);
+  
+        navigation.navigate('ProfileScreen');
+      } catch (error) {
+        console.error("Error updating profile:", error);
+      }
+    }
+
+  return (
+    <SafeAreaView>
+      <Text>Add an interest</Text>
+      {imageUri.length > 0 ? (
+        <View>
+        {imageUri
+        .map((uri) => (
+            <Image
+            key={uri}
+            source={{ uri: uri }}
+            style={{ width: 200, height: 200, marginRight: 10 }}
+            />
+        ))}
+      </View>
+      ) : (
+      null
+    )}
+    {imageUri.length < 5 ? (
+        <Button
+        title="Upload an Image"
+        onPress={pickImage}
+    />
+    ): null}
+    <Text></Text>
+    <TextInput
+    value={caption}
+    onChangeText={setCaption}
+    placeholder="Describe your interest"
+    style={{
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 12,
+        marginBottom: 12,
+    }}
+    />
+
+    <Button
+    title="Cancel"
+    onPress={() => navigation.goBack()}
+    />
+    <Button
+    title="Save"
+    onPress={handleSave}
+    />
+    </SafeAreaView>
+  );
+}

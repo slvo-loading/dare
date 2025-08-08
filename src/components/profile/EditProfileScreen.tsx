@@ -134,6 +134,10 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
       />
 
     </View>
+        <Button
+        title="Cancel"
+        onPress={() => navigation.goBack()}
+        />
       <Button
         title="Save Changes"
         onPress={handleSave}

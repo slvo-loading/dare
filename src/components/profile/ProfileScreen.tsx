@@ -30,9 +30,8 @@ type User = {
 
 type Interests = {
   id: string;
-  title: string;
-  description: string;
-  imageUrl: string[];
+  caption: string;
+  imageUri: string[];
 }
 
 export default function ProfileScreen({ navigation }: ProfileStackProps<'ProfileScreen'>) {
@@ -110,9 +109,8 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
       const interests = interestsSnap.docs
         .map(doc => ({ 
           id: doc.id,
-          title: doc.data().title,
-          description: doc.data().description,
-          imageUrl: doc.data().imageUrl || []
+          caption: doc.data().caption,
+          imageUri: doc.data().imageUri || []
         }));
 
       setInterests(interests);
@@ -120,6 +118,17 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
       console.error('Error fetching interests:', error);
     }
   };
+
+  const deleteInterest = async (interestId: string) => {
+    if (!user) return;
+    try {
+      const interestRef = doc(db, 'users', user.uid, 'interests', interestId);
+      await deleteDoc(interestRef);
+      fetchInterests();
+    } catch (error) {
+      console.error('Error deleting interest:', error);
+    }
+  }
 
   const fetchPinnedGames = async () => {
     if (!user) return;
@@ -149,24 +158,23 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
             <Button title={`${userProfile.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList')}/>
             <Text>Rank: {userProfile.rank}</Text>
 
-          {interests.length < 3 ? <Button title="Add an interest"/> : null}
+          <Button title="Add an interest" onPress={() => navigation.navigate('AddInterests')}/>
           {interests.length > 0 ? (
           <ScrollView>
               {interests
               .map((interest) => (
-                  <View key={interest.title} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                    <Button title="Delete"/>
-                    <Button title="Edit"/>
-                    <Text style={{ fontWeight: 'bold', marginRight: 10 }}>Title: {interest.title}</Text>
-                    <Text style={{ fontWeight: 'bold', marginRight: 10 }}>Description: {interest.description}</Text>
-                    {interest.imageUrl
-                    .map((image) => (
+                  <View key={interest.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                    <Button title="Delete" onPress={() => deleteInterest(interest.id)}/>
+                    <Button title="Edit" onPress={() => navigation.navigate('EditInterest', {interestId: interest.id, imageUri: interest.imageUri, caption: interest.caption})}/>
+                    {interest.imageUri
+                    .map((image, index) => (
                       <Image
-                        key={image}
+                        key={index}
                         source={{ uri: image }}
                         style={{ width: 50, height: 50, marginRight: 10 }}
                       />
                     ))}
+                    <Text style={{ fontWeight: 'bold', marginRight: 10 }}>Description: {interest.caption}</Text>
                   </View>
               ))}
           </ScrollView>
