@@ -61,8 +61,8 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false, // We’ll handle cropping manually
+      mediaTypes: ['images'],
+      allowsEditing: true, 
       quality: 1,
     });
   
@@ -95,8 +95,6 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
               </Pressable>
             </View>
           </Modal>
-
-        <Button title="Take Photo"/>
         <Button title="Upload Photo" onPress={pickImage}/>
 
         <TextInput
