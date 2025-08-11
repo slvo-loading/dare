@@ -9,6 +9,8 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import StoryView from "./StoryView";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "../../../firebaseConfig"; 
 
 type ResponseRouteParams = {
     battleId: string;
@@ -42,10 +44,37 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   const [recording, setRecording] = useState(false);
 
   const [showSubmissions, setShowSubmissions] = useState(false);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+
+  const fetchSubmissions = async () => {
+        const submissionRef = collection(db, 'games', battleId, 'submissions');
+        const q = query(submissionRef, orderBy("submitted_at", "desc"));
+        const snapshot = await getDocs(q);
+  
+        const submissionsData: Submission[] = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            submissionsData.push({
+            id: doc.id,
+            caption: data.caption,
+            dare: data.dare,
+            media_url: data.media_url,
+            submitted_at: data.submitted_at.toDate().toISOString()
+            })
+        });
+  
+        setSubmissions(submissionsData);
+    }
+
 
   useEffect(() => {
-    dare === "Waiting for dare" ? setShowSubmissions(true) : setShowSubmissions(false);
-  }, [dare]);
+    {dare === "Waiting for dare" ? (
+      fetchSubmissions(),
+      setShowSubmissions(true)
+    ) : (
+      setShowSubmissions(false)
+    )}
+  }, [dare, battleId]);
 
   if (!permission) {
     return null;
@@ -69,7 +98,6 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
     }
   };
 
-
   // need to work on recording to be only 15 sec + progress bar
   const recordVideo = async () => {
     if (recording) {
@@ -91,6 +119,9 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   };
 
   const onViewSubmissions = (bool: boolean) => {
+    if (bool) {
+      fetchSubmissions();
+    }
     setShowSubmissions(bool);
   }
 
@@ -151,7 +182,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
     <View style={styles.container}>
       <Button title="x" onPress={() => navigation.goBack()}/>
       { showSubmissions ? (
-        <StoryView battleId={battleId} onViewSubmissions={onViewSubmissions} dare={dare}/>
+        <StoryView battleId={battleId} onViewSubmissions={onViewSubmissions} dare={dare} submissions={submissions}/>
       ) : (
         renderCamera()
       )}

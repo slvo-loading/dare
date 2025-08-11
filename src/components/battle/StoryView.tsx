@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView, View, Image, Pressable, StyleSheet, Dimensions, Text, ActivityIndicator, Button } from "react-native";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { db } from "../../../firebaseConfig"; 
 import { useNavigation } from "@react-navigation/native"; // Import useNavigation
 
 
@@ -20,68 +18,52 @@ export default function StoryViewer({
   battleId, 
   onViewSubmissions,
   dare,
+  submissions,
 } : { 
   battleId: string,
   onViewSubmissions: (bool:boolean) => void
-  dare: string
+  dare: string,
+  submissions: Submission[]
 }) {
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [index, setIndex] = useState<number>(0);
-  const timerRef = useRef<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const navigation = useNavigation();
 
   useEffect(() => {
-      fetchSubmissions();
-      // setShowSubmissions(true);
-      setLoading(false);
-  }, [battleId]);
-    
-    
-  const fetchSubmissions = async () => {
-      const submissionRef = collection(db, 'games', battleId, 'submissions');
-      const q = query(submissionRef, orderBy("submitted_at", "desc"));
-      const snapshot = await getDocs(q);
+    console.log("Current index:", index);
+  }, [index]);
 
-      const submissionsData: Submission[] = [];
-      snapshot.forEach(doc => {
-          const data = doc.data();
-          submissionsData.push({
-          id: doc.id,
-          caption: data.caption,
-          dare: data.dare,
-          media_url: data.media_url,
-          submitted_at: data.submitted_at.toDate().toISOString()
-          })
-      });
-
-      setSubmissions(submissionsData);
-  }
+  useEffect(() => {
+    console.log("Submissions:", submissions);
+  })
+  
+  useEffect(() => {
+    console.log("timerRef:", timerRef.current);
+  }, [timerRef.current]);
 
   const nextStory = () => {
       setIndex((prev) => (prev + 1) % submissions.length);
     };
   
-    const prevStory = () => {
-      setIndex((prev) => (prev - 1 + submissions.length) % submissions.length);
-    };
-  
+  const prevStory = () => {
+    setIndex((prev) => (prev - 1 + submissions.length) % submissions.length);
+  };
+
   const resetTimer = () => {
-    if (timerRef.current === null) return;
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current); 
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
     }
-    timerRef.current = window.setTimeout(nextStory, 3000); // Use window.setTimeout to ensure correct typing
+    timerRef.current = setTimeout(nextStory, 3000); // no window. needed in RN
   };
 
   useEffect(() => {
-      resetTimer();
-      return () => {
-        if (timerRef.current !== null) {
-          clearTimeout(timerRef.current); 
-        }
-      };
-    }, [index]);
+    resetTimer();
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [index]);
 
     
   const handlePress = (evt : any) => {
@@ -96,13 +78,7 @@ export default function StoryViewer({
 
   return (
     <SafeAreaView>
-      {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#fff"
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        />
-      ) : (
+      { submissions.length > 0 ? (
         <View style={styles.container}>
           {dare !== "Waiting for dare" ? (
             <Button title="x" onPress={() => onViewSubmissions(false)} />
@@ -113,14 +89,14 @@ export default function StoryViewer({
             {submissions.length > 0 ? (
               <>
                 <Image
-                  source={{ uri: submissions[index].media_url }}
+                  source={{ uri: submissions[index]?.media_url }}
                   style={styles.image}
                 />
-                <Text>Caption: {submissions[index].caption}</Text>
-                <Text>Dare: {submissions[index].dare}</Text>
+                <Text>Caption: {submissions[index]?.caption}</Text>
+                <Text>Dare: {submissions[index]?.dare}</Text>
                 <Text>
                   Submitted at:{" "}
-                  {new Date(submissions[index].submitted_at).toLocaleString()}
+                  {new Date(submissions[index]?.submitted_at).toLocaleString()}
                 </Text>
               </>
             ) : (
@@ -139,6 +115,8 @@ export default function StoryViewer({
             ))}
           </View>
         </View>
+      ) : (
+        <Text>No Submissions</Text>
       )}
     </SafeAreaView>
   )
