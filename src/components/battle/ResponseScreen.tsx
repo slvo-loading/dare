@@ -8,8 +8,7 @@ import { CameraView, CameraType, useCameraPermissions, CameraMode } from 'expo-c
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { db } from "../../../firebaseConfig"; 
+import StoryView from "./StoryView";
 
 type ResponseRouteParams = {
     battleId: string;
@@ -35,7 +34,6 @@ const { height } = Dimensions.get('window');
 export default function ResponseScreen({ navigation }: BattleStackProps<'ResponseScreen'>) {
   const route = useRoute<ResponseRouteProp>();
   const { gameMode, battleId, dare } = route.params;
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
 
   const [permission, requestPermission] = useCameraPermissions();
   const ref = useRef<CameraView>(null);
@@ -43,89 +41,11 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   const [facing, setFacing] = useState<CameraType>("back");
   const [recording, setRecording] = useState(false);
 
-  const translateY = useRef(new Animated.Value(0)).current;
   const [showSubmissions, setShowSubmissions] = useState(false);
 
   useEffect(() => {
-    fetchSubmissions();
-    setShowSubmissions(true);
-  }, [battleId]);
-
-  useEffect(() => {
-    console.log("Submissions fetched:", submissions);
-  }, [submissions])
-
-  const fetchSubmissions = async () => {
-    const submissionRef = collection(db, 'games', battleId, 'submissions');
-    const q = query(submissionRef, orderBy("submitted_at", "desc"));
-    const snapshot = await getDocs(q);
-
-    const submissionsData: Submission[] = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      submissionsData.push({
-        id: doc.id,
-        caption: data.caption,
-        dare: data.dare,
-        media_url: data.media_url,
-        submitted_at: data.submitted_at.toDate().toISOString()
-      })
-    });
-
-    setSubmissions(submissionsData);
-  }
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Detect upward swipe to show submissions
-        if (gestureState.dy < -10 && !showSubmissions) return true;
-        if (gestureState.dy > 10 && showSubmissions) return true;
-        return false;
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        // move the submissions up/down
-        let newY = showSubmissions ? -height + gestureState.dy : gestureState.dy;
-        newY = Math.min(0, Math.max(newY, -height));
-        translateY.setValue(newY);
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        if (gestureState.dy < -50) {
-          // swipe up: show submissions
-          Animated.spring(translateY, { toValue: -height, useNativeDriver: true }).start(() => setShowSubmissions(true));
-        } else if (gestureState.dy > 50) {
-          // swipe down: hide submissions
-          Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start(() => setShowSubmissions(false));
-        } else {
-          // snap back
-          Animated.spring(translateY, { toValue: showSubmissions ? -height : 0, useNativeDriver: true }).start();
-        }
-      },
-    })
-  ).current;
-
-  if (dare === "Waiting for dare") {
-    // Just show submissions fullscreen, no camera
-    return (
-      <FlatList
-        data={submissions}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={{ height, justifyContent: 'center', alignItems: 'center' }}>
-            <Image
-              source={{ uri: item.media_url }}
-              style={styles.submissionImage}
-            />
-            <Text style={styles.submissionText}>Caption: {item.caption}</Text>
-            <Text style={styles.submissionText}>Dare: {item.dare}</Text>
-            <Text style={styles.submissionText}>Submitted At: {item.submitted_at}</Text>
-          </View>
-        )}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
-      />
-    );
-  }
+    dare === "Waiting for dare" ? setShowSubmissions(true) : setShowSubmissions(false);
+  }, [dare]);
 
   if (!permission) {
     return null;
@@ -170,6 +90,9 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
 
+  const onViewSubmissions = (bool: boolean) => {
+    setShowSubmissions(bool);
+  }
 
   const renderCamera = () => {
     return (
@@ -189,6 +112,9 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
             ) : (
               <Feather name="video" size={32} color="white" />
             )}
+          </Pressable>
+          <Pressable onPress={() => onViewSubmissions(true)}>
+            <Text>View Submissions</Text>
           </Pressable>
           <Pressable onPress={mode === "picture" ? takePicture : recordVideo}>
             {({ pressed }) => (
@@ -224,40 +150,11 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   return (
     <View style={styles.container}>
       <Button title="x" onPress={() => navigation.goBack()}/>
-      { dare !== "Waiting for dare" && renderCamera()}
-{/* 
-      <Animated.View
-      {...panResponder.panHandlers}
-      style={{
-        position: "absolute",
-        top: height, // start off-screen
-        left: 0,
-        right: 0,
-        height,
-        backgroundColor: "#000",
-        transform: [{ translateY }]
-      }}
-    >
-      <FlatList
-        data={submissions}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.submissionItem}>
-            <Image
-              source={{ uri: item.media_url }}
-              style={styles.submissionImage}
-            />
-            <Text style={styles.submissionText}>Caption: {item.caption}</Text>
-            <Text style={styles.submissionText}>Dare: {item.dare}</Text>
-            <Text style={styles.submissionText}>Submitted At: {item.submitted_at}</Text>
-          </View>
-        )}
-        contentContainerStyle={styles.flatListContent}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
-      />
-    </Animated.View> */}
-
+      { showSubmissions ? (
+        <StoryView battleId={battleId} onViewSubmissions={onViewSubmissions} dare={dare}/>
+      ) : (
+        renderCamera()
+      )}
   </View>
   );
 }
