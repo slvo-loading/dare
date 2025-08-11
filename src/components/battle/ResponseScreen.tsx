@@ -1,4 +1,6 @@
-import { View, Text, Button, TouchableOpacity, StyleSheet, Pressable } from "react-native";
+import { View, Text, Button, TouchableOpacity, FlatList, Dimensions, 
+  StyleSheet, Pressable, Animated, PanResponder, Image
+} from "react-native";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { BattleStackProps } from "../../types";
 import React, { useEffect, useState, useRef } from 'react';
@@ -6,6 +8,8 @@ import { CameraView, CameraType, useCameraPermissions, CameraMode } from 'expo-c
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "../../../firebaseConfig"; 
 
 type ResponseRouteParams = {
     battleId: string;
@@ -18,16 +22,110 @@ type ResponseRouteProp = RouteProp<
     'ResponseScreen'
 >;
 
+type Submission = {
+  id: string,
+  caption: string;
+  dare: string;
+  media_url: string;
+  submitted_at: string;
+}
+
+const { height } = Dimensions.get('window');
 
 export default function ResponseScreen({ navigation }: BattleStackProps<'ResponseScreen'>) {
   const route = useRoute<ResponseRouteProp>();
   const { gameMode, battleId, dare } = route.params;
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
 
   const [permission, requestPermission] = useCameraPermissions();
   const ref = useRef<CameraView>(null);
   const [mode, setMode] = useState<CameraMode>("picture");
   const [facing, setFacing] = useState<CameraType>("back");
   const [recording, setRecording] = useState(false);
+
+  const translateY = useRef(new Animated.Value(0)).current;
+  const [showSubmissions, setShowSubmissions] = useState(false);
+
+  useEffect(() => {
+    fetchSubmissions();
+    setShowSubmissions(true);
+  }, [battleId]);
+
+  useEffect(() => {
+    console.log("Submissions fetched:", submissions);
+  }, [submissions])
+
+  const fetchSubmissions = async () => {
+    const submissionRef = collection(db, 'games', battleId, 'submissions');
+    const q = query(submissionRef, orderBy("submitted_at", "desc"));
+    const snapshot = await getDocs(q);
+
+    const submissionsData: Submission[] = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      submissionsData.push({
+        id: doc.id,
+        caption: data.caption,
+        dare: data.dare,
+        media_url: data.media_url,
+        submitted_at: data.submitted_at.toDate().toISOString()
+      })
+    });
+
+    setSubmissions(submissionsData);
+  }
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Detect upward swipe to show submissions
+        if (gestureState.dy < -10 && !showSubmissions) return true;
+        if (gestureState.dy > 10 && showSubmissions) return true;
+        return false;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // move the submissions up/down
+        let newY = showSubmissions ? -height + gestureState.dy : gestureState.dy;
+        newY = Math.min(0, Math.max(newY, -height));
+        translateY.setValue(newY);
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dy < -50) {
+          // swipe up: show submissions
+          Animated.spring(translateY, { toValue: -height, useNativeDriver: true }).start(() => setShowSubmissions(true));
+        } else if (gestureState.dy > 50) {
+          // swipe down: hide submissions
+          Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start(() => setShowSubmissions(false));
+        } else {
+          // snap back
+          Animated.spring(translateY, { toValue: showSubmissions ? -height : 0, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
+
+  if (dare === "Waiting for dare") {
+    // Just show submissions fullscreen, no camera
+    return (
+      <FlatList
+        data={submissions}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={{ height, justifyContent: 'center', alignItems: 'center' }}>
+            <Image
+              source={{ uri: item.media_url }}
+              style={styles.submissionImage}
+            />
+            <Text style={styles.submissionText}>Caption: {item.caption}</Text>
+            <Text style={styles.submissionText}>Dare: {item.dare}</Text>
+            <Text style={styles.submissionText}>Submitted At: {item.submitted_at}</Text>
+          </View>
+        )}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+      />
+    );
+  }
 
   if (!permission) {
     return null;
@@ -71,7 +169,6 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   const toggleFacing = () => {
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
-
 
 
   const renderCamera = () => {
@@ -123,9 +220,44 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   };
 
 
+
   return (
     <View style={styles.container}>
-    {dare ? renderCamera() : <View></View>}
+      <Button title="x" onPress={() => navigation.goBack()}/>
+      { dare !== "Waiting for dare" && renderCamera()}
+{/* 
+      <Animated.View
+      {...panResponder.panHandlers}
+      style={{
+        position: "absolute",
+        top: height, // start off-screen
+        left: 0,
+        right: 0,
+        height,
+        backgroundColor: "#000",
+        transform: [{ translateY }]
+      }}
+    >
+      <FlatList
+        data={submissions}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.submissionItem}>
+            <Image
+              source={{ uri: item.media_url }}
+              style={styles.submissionImage}
+            />
+            <Text style={styles.submissionText}>Caption: {item.caption}</Text>
+            <Text style={styles.submissionText}>Dare: {item.dare}</Text>
+            <Text style={styles.submissionText}>Submitted At: {item.submitted_at}</Text>
+          </View>
+        )}
+        contentContainerStyle={styles.flatListContent}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+      />
+    </Animated.View> */}
+
   </View>
   );
 }
@@ -172,5 +304,27 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center', 
     marginTop: 20, 
+  },
+  flatListContent: {
+    padding: 20, // Add padding to the FlatList content
+  },
+  submissionItem: {
+    width: '100%',
+    padding: 20,
+    marginBottom: 20,
+    backgroundColor: '#333', // Add a background color for better visibility
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  submissionImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 10,
+    borderRadius: 10,
+  },
+  submissionText: {
+    color: 'black',
+    fontSize: 16,
+    marginBottom: 5,
   },
 });
