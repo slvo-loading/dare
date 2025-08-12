@@ -171,13 +171,13 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
             )}
           </Pressable>
           <Pressable onPress={() => onViewSubmissions(true)}>
-            <Text>Subs</Text>
+            <Text style={{ color: 'white' }}>Subs</Text>
           </Pressable>
           {newSubmission.length > 0 && (
           <Pressable onPress={() => 
             navigation.navigate('SubmitScreen', 
-            {uri: newSubmission, battleId: battleId, dare: dare, gameMode: gameMode,})}>
-              <Text>Submit</Text>
+            {uri: newSubmission, battleId: battleId, dare: dare, gameMode: gameMode, caption: null, draft: false})}>
+              <Text style={{ color: 'white' }}>Submit</Text>
             </Pressable>
           )}
           <Pressable onPress={mode === "picture" ? takePicture : recordVideo}>
@@ -201,6 +201,11 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
               </View>
             )}
           </Pressable>
+          <Pressable onPress={() => 
+            navigation.navigate('DraftPickScreen', 
+            { battleId: battleId, dare: dare, gameMode: gameMode})}>
+              <Text style={{ color: 'white' }}>Drafts</Text>
+            </Pressable>
           <Pressable onPress={toggleFacing}>
             <FontAwesome6 name="rotate-left" size={32} color="white" />
           </Pressable>

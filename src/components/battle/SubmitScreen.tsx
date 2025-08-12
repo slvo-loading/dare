@@ -1,19 +1,22 @@
 import { SafeAreaView, View, Text, Button, TextInput, ScrollView } from "react-native";
 import { BattleStackProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, arrayRemove, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "../../../firebaseConfig";
 import { Image } from "expo-image";
 // import { useVideoPlayer, VideoView } from 'expo-video';
 import { Video } from 'expo-av';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 
 type SubmitRouteParams = {
   uri: NewSubmission[];
   battleId: string;
   dare: string;
   gameMode: string;
+  caption: string | null;
+  draft: boolean;
 };
 
 type SubmitRouteProp = RouteProp<
@@ -28,11 +31,12 @@ type NewSubmission = {
 
 export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScreen'>) {
   const route = useRoute<SubmitRouteProp>();
-  const { uri, battleId, dare, gameMode, } = route.params;
-  const [caption, setCaption] = useState<string>('');
+  const { uri, battleId, dare, gameMode, draft} = route.params;
+  const [caption, setCaption] = useState<string>(route.params.caption || '');
   const [newDare, setNewDare] = useState<string>('');
   const [media, setMedia] = useState<NewSubmission[]>(uri);
   const { user } = useAuth();
+
 
   const handleSubmit = async () => {
     if (!user || !uri || !battleId) {
@@ -72,7 +76,10 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
 
       setNewDare('');
       setCaption('');
-      navigation.navigate('BattleScreen');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "BattleScreen" }],
+      });
 
     } catch (error) {
       console.error("Error submitting data:", error);
@@ -85,22 +92,47 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
       return;
     }
 
-    const battleRef = doc(db, "games", battleId);
+    const battleRef = doc(db, "users", user.uid);
     const submissionsRef = collection(battleRef, "drafts");
 
+    let thumbnail = null;
+
+    if (media[0].type === 'video') {
+      thumbnail = createThumbnail(media[0].uri)
+    } else {
+      thumbnail = media[0].uri; 
+    }
+
     const submissionData = {
-      user_id: user.uid, 
       media: media,
       caption: caption,
+      thumbnail: thumbnail
     }
 
     await addDoc(submissionsRef, submissionData);
-    navigation.navigate('BattleScreen');
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "BattleScreen" }],
+    });
+  }
+
+  const createThumbnail = async (videoUri: string) => {
+    try {
+      const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
+        time: 1000, // capture at 1 second
+      });
+      console.log(uri); // thumbnail image path
+    } catch (e) {
+      console.warn(e);
+    }
+
+    return uri;
   }
 
   return (
       <SafeAreaView>
         <ScrollView>
+        <Button onPress={() => navigation.goBack()} title="x" />
         {media
         .map((item, index) => (
           <View key={index} style={{ marginBottom: 12 }}>
@@ -126,7 +158,6 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
             }} />
           </View>
         ))}
-        <Button onPress={() => navigation.goBack()} title="Take another picture" />
         <TextInput
           value={caption}
           onChangeText={setCaption}

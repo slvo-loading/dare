@@ -29,18 +29,6 @@ export default function StoryViewer({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    console.log("Current index:", index);
-  }, [index]);
-
-  useEffect(() => {
-    console.log("Submissions:", submissions);
-  })
-  
-  useEffect(() => {
-    console.log("timerRef:", timerRef.current);
-  }, [timerRef.current]);
-
   const nextStory = () => {
       setIndex((prev) => (prev + 1) % submissions.length);
     };

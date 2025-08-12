@@ -32,7 +32,8 @@ type NewSubmission = {
 export type BattleStackParamList = {
     BattleScreen: undefined;
     ResponseScreen: { battleId: string; dare: string; gameMode: string };
-    SubmitScreen: { uri: NewSubmission[]; battleId: string; dare: string; gameMode: string;};
+    SubmitScreen: { uri: NewSubmission[]; battleId: string; dare: string; gameMode: string; caption: string | null, draft: boolean};
+    DraftPickScreen: { battleId: string; dare: string; gameMode: string };
 
     HabitConfig:  { type: string; };
     OpponentSelection: undefined;

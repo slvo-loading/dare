@@ -5,6 +5,7 @@ import React, { useCallback } from 'react';
 import BattleScreen from '../components/battle/BattleScreen';
 import ResponseScreen from '../components/battle/ResponseScreen';
 import SubmitScreen from '../components/battle/SubmitScreen';
+import DraftPickScreen from '../components/battle/DraftPickScreen';
 import { BattleStackParamList, TabScreenProps } from '../types';
 
 import GameStart from '../components/matchmaking/GameStart';
@@ -51,6 +52,7 @@ useFocusEffect(
         <Stack.Screen name="BattleScreen" component={BattleScreen} />
         <Stack.Screen name="ResponseScreen" component={ResponseScreen} />
         <Stack.Screen name="SubmitScreen" component={SubmitScreen} />
+        <Stack.Screen name="DraftPickScreen" component={DraftPickScreen} />
 
         <Stack.Screen name="HabitConfig" component={HabitConfigScreen} />
         <Stack.Screen name="OpponentSelection" component={OpponentSelection} />
