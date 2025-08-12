@@ -7,6 +7,7 @@ import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { BattleStackProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Media = {
     id: string;
@@ -44,31 +45,26 @@ export default function DraftPickScreen({ navigation }: BattleStackProps<'DraftP
     const fetchDraft = async () => {
         if(!user) return;
 
-        const draftsRef = collection(db, 'users', user.uid, 'drafts');
-        const snapshot = await getDocs(draftsRef);
-
-        console.log("Drafts fetched:", snapshot.docs.length);
-
-        const draftsArray: Media[] = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            draftsArray.push({
-                id: doc.id,
-                media: data.media,
-                caption: data.caption,
-                thumbnail: data.thumbnail
-            });
-        });
-
-    setDrafts(draftsArray);
+        try {
+            const draftsRaw = await AsyncStorage.getItem(`drafts_${user.uid}`);
+            const drafts = draftsRaw ? JSON.parse(draftsRaw) : [];
+            setDrafts(drafts);
+          } catch (e) {
+            console.error("Failed to load drafts", e);
+            return [];
+          }
     }
 
  const handleNext = async () => {
     if (!user || !selectedDraft) return;
 
     try {
-        const draftDocRef = doc(db, 'users', user.uid, 'drafts', selectedDraft.id);
-        await deleteDoc(draftDocRef);
+        setDrafts(prevDrafts => {
+            const updated = prevDrafts.filter(draft => draft.id !== selectedDraft.id);
+            AsyncStorage.setItem(`drafts_${user.uid}`, JSON.stringify(updated));
+            return updated;
+          });
+          
     } catch (error) {
         console.log (error)
     }

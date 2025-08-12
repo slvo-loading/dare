@@ -4,11 +4,13 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, arrayRemove, arrayUnion, getDoc } from "firebase/firestore";
-import { db } from "../../../firebaseConfig";
+import { db, storage } from "../../../firebaseConfig";
 import { Image } from "expo-image";
 // import { useVideoPlayer, VideoView } from 'expo-video';
 import { Video } from 'expo-av';
 import * as VideoThumbnails from 'expo-video-thumbnails';
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type SubmitRouteParams = {
   uri: NewSubmission[];
@@ -46,10 +48,11 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
 
     const battleRef = doc(db, "games", battleId);
     const submissionsRef = collection(battleRef, "submissions");
+    const updatedMedia = uploadAllMedia();
 
     const submissionData = {
       user_id: user.uid, 
-      media: media, 
+      media: updatedMedia, 
       dare: dare,
       submitted_at: serverTimestamp(),
       caption: caption,
@@ -86,17 +89,41 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
     }
   }
 
+  async function uploadAllMedia() {
+    if (!user) return;
+    const uploadedMedia = await Promise.all(
+      media.map(async (item, index) => {
+        // Convert URI to Blob
+        const response = await fetch(item.uri);
+        const blob = await response.blob();
+  
+        // Create a storage ref with unique name
+        const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${index}`);
+  
+        // Upload Blob
+        await uploadBytes(storageRef, blob);
+  
+        // Get download URL
+        const downloadURL = await getDownloadURL(storageRef);
+  
+        // Return updated media object with new URL
+        return {
+          type: item.type,
+          uri: downloadURL,
+        };
+      })
+    );
+  
+    return uploadedMedia; // array with updated URLs
+  }
+
   const handleDraft = async () => {
-    if (!user || !uri || !battleId) {
+    if (!user || !uri) {
       console.error("Missing submission data.")
       return;
     }
-
-    const battleRef = doc(db, "users", user.uid);
-    const submissionsRef = collection(battleRef, "drafts");
-
+    
     let thumbnail = null;
-
     if (media[0].type === 'video') {
       thumbnail = createThumbnail(media[0].uri)
     } else {
@@ -104,12 +131,21 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
     }
 
     const submissionData = {
+      id: Date.now().toString(),
       media: media,
       caption: caption,
       thumbnail: thumbnail
     }
-
-    await addDoc(submissionsRef, submissionData);
+    
+    try {
+      const draftsRaw = await AsyncStorage.getItem(`drafts_${user.uid}`);
+      const drafts = draftsRaw ? JSON.parse(draftsRaw) : [];
+      drafts.push(submissionData);
+      await AsyncStorage.setItem(`drafts_${user.uid}`, JSON.stringify(drafts));
+    } catch (e) {
+      console.error('Failed to save draft locally', e);
+    }
+  
     navigation.reset({
       index: 0,
       routes: [{ name: "BattleScreen" }],
