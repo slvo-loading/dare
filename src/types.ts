@@ -24,10 +24,15 @@ export type AuthStackParamList = {
   Login: undefined;
 }
 
+type NewSubmission = {
+  type: string;
+  uri: string;
+}
+
 export type BattleStackParamList = {
     BattleScreen: undefined;
     ResponseScreen: { battleId: string; dare: string; gameMode: string };
-    SubmitScreen: { uri: string; battleId: string; dare: string; gameMode: string;};
+    SubmitScreen: { uri: NewSubmission[]; battleId: string; dare: string; gameMode: string;};
 
     HabitConfig:  { type: string; };
     OpponentSelection: undefined;

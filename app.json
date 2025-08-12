@@ -45,7 +45,14 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ]
     ],
     "extra": {
       "FIREBASE_API_KEY": "AIzaSyB6jd18FzHRZdXqxp82UGqSp4MbQo_gSFU",

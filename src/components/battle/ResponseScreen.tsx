@@ -1,5 +1,5 @@
-import { View, Text, Button, TouchableOpacity, FlatList, Dimensions, 
-  StyleSheet, Pressable, Animated, PanResponder, Image
+import { View, Text, Button, Dimensions, 
+  StyleSheet, Pressable,
 } from "react-native";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { BattleStackProps } from "../../types";
@@ -31,6 +31,11 @@ type Submission = {
   submitted_at: string;
 }
 
+type NewSubmission = {
+  type: string;
+  uri: string;
+}
+
 const { height } = Dimensions.get('window');
 
 export default function ResponseScreen({ navigation }: BattleStackProps<'ResponseScreen'>) {
@@ -42,9 +47,11 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   const [mode, setMode] = useState<CameraMode>("picture");
   const [facing, setFacing] = useState<CameraType>("back");
   const [recording, setRecording] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [newSubmission, setNewSubmission] = useState<NewSubmission[]>([]);
 
   const fetchSubmissions = async () => {
         const submissionRef = collection(db, 'games', battleId, 'submissions');
@@ -94,20 +101,39 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync();
     if (photo) {
-      navigation.navigate('SubmitScreen', {uri: photo.uri, battleId: battleId, dare: dare, gameMode: gameMode})
+      setNewSubmission(prev => [...prev, { type: 'photo', uri: photo.uri }]);
     }
   };
+
 
   // need to work on recording to be only 15 sec + progress bar
   const recordVideo = async () => {
     if (recording) {
+      console.log("Recording stopped");
       setRecording(false);
+
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current); 
+      }
+
       ref.current?.stopRecording();
       return;
     }
+
     setRecording(true);
+    console.log("Recording started");
+
+    timerRef.current = setTimeout(() => {
+    console.log("Recording auto-stopped after 15 seconds");
+    setRecording(false);
+    ref.current?.stopRecording();
+  }, 15000);
+
     const video = await ref.current?.recordAsync();
-    console.log({ video });
+    if (video) {
+      console.log("Video recorded:", video.uri);
+      setNewSubmission(prev => [...prev, { type: 'video', uri: video.uri }]);
+    }
   };
 
   const toggleMode = () => {
@@ -145,8 +171,15 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
             )}
           </Pressable>
           <Pressable onPress={() => onViewSubmissions(true)}>
-            <Text>View Submissions</Text>
+            <Text>Subs</Text>
           </Pressable>
+          {newSubmission.length > 0 && (
+          <Pressable onPress={() => 
+            navigation.navigate('SubmitScreen', 
+            {uri: newSubmission, battleId: battleId, dare: dare, gameMode: gameMode,})}>
+              <Text>Submit</Text>
+            </Pressable>
+          )}
           <Pressable onPress={mode === "picture" ? takePicture : recordVideo}>
             {({ pressed }) => (
               <View
