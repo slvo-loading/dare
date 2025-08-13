@@ -118,16 +118,26 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
   }
 
   const handleDraft = async () => {
-    if (!user || !uri) {
+    if (!user || !uri || media.length === 0) {
       console.error("Missing submission data.")
       return;
     }
     
-    let thumbnail = null;
+    let thumbnail:string | null = null;
     if (media[0].type === 'video') {
-      thumbnail = createThumbnail(media[0].uri)
+      try {
+        thumbnail = await createThumbnail(media[0].uri);
+        console.log("Thumbnail result:", thumbnail);
+      } catch (error) {
+        console.error("Error creating thumbnail:", error);
+      }
     } else {
       thumbnail = media[0].uri; 
+    }
+
+    if (!thumbnail) {
+      console.error("No thumbnail created or available.");
+      return;
     }
 
     const submissionData = {
@@ -157,19 +167,32 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
       const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
         time: 1000, // capture at 1 second
       });
-      console.log(uri); // thumbnail image path
+      console.log("video thumbnail created", uri); // thumbnail image path
+      return uri;
     } catch (e) {
       console.warn(e);
+      return null;
     }
-
-    return uri;
   }
 
   return (
       <SafeAreaView>
         <ScrollView>
-        <Button onPress={() => navigation.goBack()} title="x" />
-        {media
+        <Button
+          onPress={() =>
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: "ResponseScreen",
+                  params: { battleId: battleId, dare: dare, gameMode: gameMode },
+                },
+              ],
+            })
+          }
+          title="x"
+        />
+      {media
         .map((item, index) => (
           <View key={index} style={{ marginBottom: 12 }}>
           {item.type === 'photo' ? (

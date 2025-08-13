@@ -83,6 +83,9 @@ useEffect(() => {
         <Button title='x' onPress={() => navigation.goBack()} />
     {drafts.length > 0 ? (
         <ScrollView>
+        {selectedDraft && (
+            <Button title="Next" onPress={handleNext}/>
+        )}
         {drafts.map((draft, index) => (
             <View key={index} style={{ margin: 10 }}>
                 <Image
@@ -92,9 +95,6 @@ useEffect(() => {
                 <Button title="Select" onPress={() => setSelectedDraft(drafts[index])}/>
             </View>
         ))}
-        {selectedDraft && (
-            <Button title="Next" onPress={handleNext}/>
-        )}
         </ScrollView>
     ) : (
        <Text>No drafts available</Text>
