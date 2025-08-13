@@ -8,9 +8,7 @@ import { CameraView, CameraType, useCameraPermissions, CameraMode } from 'expo-c
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import StoryView from "./StoryView";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { db } from "../../../firebaseConfig"; 
+import PostView from "./PostView";
 
 type ResponseRouteParams = {
     battleId: string;
@@ -50,33 +48,11 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [showSubmissions, setShowSubmissions] = useState(false);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [newSubmission, setNewSubmission] = useState<NewSubmission[]>([]);
-
-  const fetchSubmissions = async () => {
-        const submissionRef = collection(db, 'games', battleId, 'submissions');
-        const q = query(submissionRef, orderBy("submitted_at", "desc"));
-        const snapshot = await getDocs(q);
-  
-        const submissionsData: Submission[] = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            submissionsData.push({
-            id: doc.id,
-            caption: data.caption,
-            dare: data.dare,
-            media_url: data.media_url,
-            submitted_at: data.submitted_at.toDate().toISOString()
-            })
-        });
-  
-        setSubmissions(submissionsData);
-    }
 
 
   useEffect(() => {
     {dare === "Waiting for dare" ? (
-      fetchSubmissions(),
       setShowSubmissions(true)
     ) : (
       setShowSubmissions(false)
@@ -101,7 +77,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync();
     if (photo) {
-      setNewSubmission(prev => [...prev, { type: 'photo', uri: photo.uri }]);
+      setNewSubmission(prev => [...prev, { type: 'photo', uri: photo.uri,}]);
     }
   };
 
@@ -145,9 +121,6 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
   };
 
   const onViewSubmissions = (bool: boolean) => {
-    if (bool) {
-      fetchSubmissions();
-    }
     setShowSubmissions(bool);
   }
 
@@ -218,9 +191,12 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
 
   return (
     <View style={styles.container}>
-      <Button title="x" onPress={() => navigation.goBack()}/>
+      <Button title="x" onPress={() => navigation.reset({
+        index: 0,
+        routes: [{ name: "BattleScreen" }],
+      })}/>
       { showSubmissions ? (
-        <StoryView battleId={battleId} onViewSubmissions={onViewSubmissions} dare={dare} submissions={submissions}/>
+        <PostView battleId={battleId} onViewSubmissions={onViewSubmissions} dare={dare}/>
       ) : (
         renderCamera()
       )}
@@ -237,8 +213,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   camera: {
-    flex: 1,
     width: "100%",
+    aspectRatio: 1,
+    height: undefined,
   },
   shutterContainer: {
     position: "absolute",

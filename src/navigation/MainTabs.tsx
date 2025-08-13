@@ -4,6 +4,7 @@ import ProfileStack from './ProfileStack';
 import { MainTabParamList } from '../types';
 import BattleStack from './BattleStack';
 import LeaderboardTabs from './LeaderboardTabs';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 

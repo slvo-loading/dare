@@ -201,17 +201,20 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
           {item.type === 'photo' ? (
             <Image
             source={{ uri: item.uri }}
-            contentFit="contain"
+            contentFit="cover"
             style={{ width: 300, aspectRatio: 1 }}
           />
           ) : (
+            <View style={{ width: 300, height: 300, overflow: 'hidden', marginLeft: 12 }}>
             <Video
             source={{ uri: item.uri }}
-            style={{ width: 300, height: 300 }}
-            useNativeControls
+            style={{ width: 300, height: 400,   position: 'absolute', 
+              top: -30, }}
             shouldPlay
             isLooping
+            isMuted
           />
+          </View>
           )}
           <Button
             title="Remove"
