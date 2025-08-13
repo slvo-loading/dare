@@ -48,7 +48,8 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
 
     const battleRef = doc(db, "games", battleId);
     const submissionsRef = collection(battleRef, "submissions");
-    const updatedMedia = uploadAllMedia();
+    const updatedMedia = await uploadAllMedia();
+    console.log("Updated media:", updatedMedia);
 
     const submissionData = {
       user_id: user.uid, 
@@ -57,6 +58,8 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
       submitted_at: serverTimestamp(),
       caption: caption,
     }
+
+    console.log("Submitting data:", submissionData);
 
     await addDoc(submissionsRef, submissionData);
 
@@ -98,7 +101,7 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
         const blob = await response.blob();
   
         // Create a storage ref with unique name
-        const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${index}`);
+        const storageRef = ref(storage, `media/${Date.now()}_${index}`);
   
         // Upload Blob
         await uploadBytes(storageRef, blob);
