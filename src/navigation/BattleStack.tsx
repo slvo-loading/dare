@@ -13,6 +13,7 @@ import HabitConfigScreen from '../components/matchmaking/HabitConfigScreen';
 import InviteFriendScreen from '../components/matchmaking/InviteFriendScreen';
 import MatchmakingScreen from '../components/matchmaking/MatchmakingScreen';
 import OpponentSelection from '../components/matchmaking/OpponentSelection';
+import ResultScreen from '../components/battle/ResultScreen';
 
 const Stack = createNativeStackNavigator<BattleStackParamList>();
 
@@ -53,6 +54,7 @@ useFocusEffect(
         <Stack.Screen name="ResponseScreen" component={ResponseScreen} />
         <Stack.Screen name="SubmitScreen" component={SubmitScreen} />
         <Stack.Screen name="DraftPickScreen" component={DraftPickScreen} />
+        <Stack.Screen name="ResultScreen" component={ResultScreen} />
 
         <Stack.Screen name="HabitConfig" component={HabitConfigScreen} />
         <Stack.Screen name="OpponentSelection" component={OpponentSelection} />

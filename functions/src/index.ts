@@ -80,6 +80,8 @@ export const checkDailySubmissions = onSchedule(
       if (winner !== null) {
         await db.collection("games").doc(battleId).update({
           status: "completed",
+          player1_status: null,
+          player2_status: null,
           winner: winner,
           ended_at: Timestamp.now(),
         });

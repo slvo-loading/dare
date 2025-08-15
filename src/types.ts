@@ -29,11 +29,24 @@ type NewSubmission = {
   uri: string;
 }
 
+type Completed = 
+{
+  battleId: string;
+  opponentId: string;
+  opponentName: string,
+  avatarUrl: string,
+  status: string, 
+  winner: string,
+  startDate: any,
+  endDate: any,
+}
+
 export type BattleStackParamList = {
     BattleScreen: undefined;
     ResponseScreen: { battleId: string; dare: string; gameMode: string };
     SubmitScreen: { uri: NewSubmission[]; battleId: string; dare: string; gameMode: string; caption: string | null, draft: boolean};
     DraftPickScreen: { battleId: string; dare: string; gameMode: string };
+    ResultScreen: { battle: Completed;};
 
     HabitConfig:  { type: string; };
     OpponentSelection: undefined;
