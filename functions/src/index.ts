@@ -1,65 +1,79 @@
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {Timestamp} from "firebase-admin/firestore";
+
 
 admin.initializeApp();
 
 export const checkDailySubmissions = onSchedule(
   {
-    schedule: "0 0 * * *",
+    // schedule: "0 0 * * *", reactivate before launch!!
+    schedule: "0 0 28 2 *",
     timeZone: "America/New_York",
     region: "us-central1",
   },
   async (event) => {
-    logger.log("Running nightly submission check", event);
+    logger.log("1 - starting function", event);
     const db = admin.firestore();
     const battlesSnapshot = await db.collection("games").get();
-
-    logger.info(`Checking ${battlesSnapshot.size}
-      games for missed submissions...`);
+    logger.info("2 - battlesSnapshot:", battlesSnapshot.docs.length);
 
     for (const doc of battlesSnapshot.docs) {
       const battle = doc.data();
       const battleId = doc.id;
+      logger.info("4: starting check:", battleId);
 
-      if (battle.status !== "active") continue;
+      if (battle.status !== "active") {
+        logger.info("5 - battle not active, skipping:", battleId);
+        continue;
+      } else {
+        logger.info("5 - battle active, checking:", battleId);
+      }
 
       const now = new Date();
-      const gameStart = new Date(battle.start_date);
+      logger.info("Current time:", now.toISOString());
+      const gameStart = battle.start_date.toDate();
+      logger.info("Game start time:", gameStart.toISOString());
       const oneDayInMs = 24 * 60 * 60 * 1000;
       const fullDayPassed = now.getTime() - gameStart.getTime() > oneDayInMs;
 
-      if (!fullDayPassed) continue;
+      if (!fullDayPassed) {
+        logger.info("6 - not a full day passed, skipping battle:", battleId);
+        continue;
+      } else {
+        logger.info("6 - full day passed, checking submissions:", battleId);
+      }
 
       const yesterday = new Date(Date.now() - oneDayInMs)
         .toISOString().slice(0, 10);
 
-      const player1Last = battle.player1_last_submissions ?
-        battle.player1_last_submissions.toDate().toISOString().slice(0, 10) :
+      const player1Last = battle.player1_last_submission ?
+        battle.player1_last_submission.toDate().toISOString().slice(0, 10) :
         null;
-
-      const player2Last = battle.player2_last_submissions ?
-        battle.player2_last_submissions.toDate().toISOString().slice(0, 10) :
+      const player2Last = battle.player2_last_submission ?
+        battle.player2_last_submission.toDate().toISOString().slice(0, 10) :
         null;
 
       const player1Missed = !player1Last || player1Last < yesterday;
       const player2Missed = !player2Last || player2Last < yesterday;
 
-      logger.info(`Game ID: ${battleId}`);
-      logger.info(`  - Player 1 Last: ${player1Last}, 
-        Missed: ${player1Missed}`);
-      logger.info(`  - Player 2 Last: ${player2Last}, 
-        Missed: ${player2Missed}`);
+      logger.info("7 - Player 1 missed:", player1Missed);
+      logger.info("7 - Player 2 missed:", player2Missed);
 
       let winner: string | null = null;
 
       if (player1Missed && !player2Missed) {
-        winner = battle.player2;
+        logger.info("8 - Player 1 missed submission, Player 2 wins");
+        winner = battle.player2_id;
       } else if (player2Missed && !player1Missed) {
-        winner = battle.player1;
+        logger.info("8 - Player 2 missed submission, Player 1 wins");
+        winner = battle.player1_id;
       } else if (player1Missed && player2Missed) {
+        logger.info("8 - Both players missed submission, no winner");
         winner = "none";
       } else {
+        logger.info("8 - Both players submitted, game continues");
         continue;
       }
 
@@ -67,79 +81,13 @@ export const checkDailySubmissions = onSchedule(
         await db.collection("games").doc(battleId).update({
           status: "completed",
           winner: winner,
-          ended_at: admin.firestore.Timestamp.now(),
+          ended_at: Timestamp.now(),
         });
       }
     }
 
+    logger.info("9 - Finished checking");
+
     return;
   }
 );
-
-// exports.checkDailySubmissions = functions.pubsub
-//   .schedule("0 0 * * *")
-//   .timeZone("America/New_York")
-//   .onRun(async () => {
-//     const db = admin.firestore();
-//     const battlesSnapshot = await db.collection("games").get();
-
-//     logger.info(`Checking ${battlesSnapshot.size}
-//       games for missed submissions...`);
-
-//     for (const doc of battlesSnapshot.docs) {
-//       const battle = doc.data();
-//       const battleId = doc.id;
-
-//       if (battle.status !== "active") continue;
-
-//       const now = new Date();
-//       const gameStart = new Date(battle.start_date);
-//       const oneDayInMs = 24 * 60 * 60 * 1000;
-//       const fullDayPassed = now.getTime() - gameStart.getTime() > oneDayInMs;
-
-//       if (!fullDayPassed) continue;
-
-//       const yesterday = new Date(Date.now() - oneDayInMs)
-//         .toISOString().slice(0, 10);
-
-//       const player1Last = battle.player1_last_submissions ?
-//         battle.player1_last_submissions.toDate().toISOString().slice(0, 10) :
-//         null;
-
-//       const player2Last = battle.player2_last_submissions ?
-//         battle.player2_last_submissions.toDate().toISOString().slice(0, 10) :
-//         null;
-
-//       const player1Missed = !player1Last || player1Last < yesterday;
-//       const player2Missed = !player2Last || player2Last < yesterday;
-
-//       logger.info(`Game ID: ${battleId}`);
-//       logger.info(`  - Player 1 Last: ${player1Last},
-//         Missed: ${player1Missed}`);
-//       logger.info(`  - Player 2 Last: ${player2Last},
-//         Missed: ${player2Missed}`);
-
-
-//       let winner: string | null = null;
-
-//       if (player1Missed && !player2Missed) {
-//         winner = battle.player2;
-//       } else if (player2Missed && !player1Missed) {
-//         winner = battle.player1;
-//       } else if (player1Missed && player2Missed) {
-//         winner = "none";
-//       } else {
-//         continue;
-//       }
-
-//       if (winner !== null) {
-//         await db.collection("games").doc(battleId).update({
-//           status: "completed",
-//           winner: winner,
-//           ended_at: admin.firestore.Timestamp.now(),
-//         });
-//       }
-//     }
-
-//     return null;
-//   });
