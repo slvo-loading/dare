@@ -55,7 +55,6 @@ useFocusEffect(
         <Stack.Screen name="SubmitScreen" component={SubmitScreen} />
         <Stack.Screen name="DraftPickScreen" component={DraftPickScreen} />
         <Stack.Screen name="ResultScreen" component={ResultScreen} />
-
         <Stack.Screen name="HabitConfig" component={HabitConfigScreen} />
         <Stack.Screen name="OpponentSelection" component={OpponentSelection} />
         <Stack.Screen name="InviteFriend" component={InviteFriendScreen} />

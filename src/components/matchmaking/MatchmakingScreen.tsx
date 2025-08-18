@@ -3,7 +3,7 @@ import { BattleStackProps } from "../../types";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {io, Socket } from 'socket.io-client';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import { collection, doc, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, Timestamp, runTransaction } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -11,18 +11,18 @@ type MatchData = {
   opponentName: string;
   opponentId: string;
   dare: string;
+  coins: number;
   isHost: boolean;
 }
 
 type MatchmakingScreenRouteProp = RouteProp<
-  { Matchmaking: { dare: { userName: string, userId: string, dare: string}, gameMode: string } },
+  { Matchmaking: { dare: { userName: string, userId: string, dare: string, coins: number} } },
   'Matchmaking'
 >;
 
 export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matchmaking'>) {
   const route = useRoute<MatchmakingScreenRouteProp>();
-  const [dare, setDare] = useState(route.params.dare);
-  const gameMode = route.params.gameMode; 
+  const [dare, setDare] = useState(route.params.dare); 
 
   const [status, setStatus] = useState('Looking for match...');
   const [match, setMatch] = useState<MatchData | null>(null);
@@ -98,7 +98,9 @@ useFocusEffect(
             player1Id: currentMatch.opponentId, 
             player2Id: dare.userId, 
             dareFromPlayer1: currentMatch.dare,
-            dareFromPlayer2: dare.dare
+            dareFromPlayer2: dare.dare,
+            player1Coins: currentMatch.coins,
+            player2Coins: dare.coins
           })
           console.log("Game created successfully")
         }
@@ -161,21 +163,43 @@ useFocusEffect(
     }
   };
 
-  const createGame = async ({ player1Id, player2Id, dareFromPlayer1, dareFromPlayer2 } 
-    : {player1Id:string, player2Id: string, dareFromPlayer1: string, dareFromPlayer2: string}) => {
-    console.log("Creating game with:", { player1Id, player2Id, dareFromPlayer1, dareFromPlayer2 });
-    
-    await addDoc(collection(db, "games"), {
-      player1_id: player1Id,
-      player2_id: player2Id,
-      player1_dare: [dareFromPlayer1],
-      player2_dare: [dareFromPlayer2],
-      status: 'active',
-      game_mode: gameMode,
-      start_date: Timestamp.now(),
-      updated_at: Timestamp.now(),
-    });
-  };
+  const createGame = async ({ player1Id, player2Id, dareFromPlayer1, dareFromPlayer2, player1Coins, player2Coins} 
+    : {player1Id:string, player2Id: string, dareFromPlayer1: string, dareFromPlayer2: string, 
+      player1Coins: number, player2Coins: number}) => {
+
+    await runTransaction(db, async (transaction) => {
+      const p1Ref = doc(db, "users", player1Id);
+      const p2Ref = doc(db, "users", player2Id);
+
+      const p1Snap = await transaction.get(p1Ref);
+      const p2Snap = await transaction.get(p2Ref);
+
+      if (!p1Snap.exists() || !p2Snap.exists()) {
+        throw new Error("One or both players not found");
+      }
+
+      const p1Coins = p1Snap.data().coins || 0;
+      const p2Coins = p2Snap.data().coins || 0;
+
+      if (p1Coins < player1Coins || p2Coins < player2Coins) {
+        throw new Error("One or both players do not have enough coins");
+      }
+
+      transaction.update(p1Ref, { coins: p1Coins - player1Coins });
+      transaction.update(p2Ref, { coins: p2Coins - player2Coins });
+
+      const gameRef = doc(collection(db, "games"));
+      transaction.set(gameRef, {
+        player1_id: player1Id,
+        player2_id: player2Id,
+        player1_dare: dareFromPlayer1,
+        player2_dare: dareFromPlayer2,
+        status: 'active',
+        coins: player1Coins + player2Coins,
+        start_date: Timestamp.now(),
+      });
+    })
+  }
 
   useEffect(() => {
     console.log('match:', match);
@@ -190,6 +214,9 @@ useFocusEffect(
           </Text>
           <Text style={{ marginBottom: 20 }}>
             Dare: {match.dare}
+          </Text>
+          <Text style={{ marginBottom: 20 }}>
+            for {match.coins} coins :D
           </Text>
           <Text style={{ marginBottom: 20 }}>
             Starting in {countdown} seconds...

@@ -13,6 +13,7 @@ import {
   getDoc,
   addDoc,
   Timestamp,
+  runTransaction
 } from 'firebase/firestore';
 
 type Friend = {
@@ -24,7 +25,7 @@ type Friend = {
 };
 
 type InviteScreenRouteProp = RouteProp<
-  { InviteFriend: { dare: string, gameMode: string } },
+  { InviteFriend: { dare: string, coins: number } },
   'InviteFriend'
 >;
 
@@ -35,7 +36,7 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const route = useRoute<InviteScreenRouteProp>();
   const [dare, setDare] = useState(route.params.dare);
-  const gameMode = route.params.gameMode; 
+  const coins = route.params.coins;
 
   useEffect(() => {
     fetchFriends();
@@ -106,29 +107,50 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
     console.log('open a modal of the profile')
   };
   
-  const sendInvite = async (friendId: string, friendName: string) => {
-    if(!user) return;
-
-    await addDoc(collection(db, 'games'), {
-      player1_id: user.uid,
-      player2_id: friendId,
-      player1_dare: [dare],
-      player2_dare: [],
-      status: 'pending',
-      game_mode: gameMode,
-      start_date: Timestamp.now(),
-      updated_at: Timestamp.now(),
+  const sendInvite = async (selectedId: string, selectedName: string,) => {
+    if (!user) return;
+  
+    const userRef = doc(db, "users", user.uid);
+  
+    await runTransaction(db, async (transaction) => {
+      // Get fresh user data
+      const userSnap = await transaction.get(userRef);
+      if (!userSnap.exists()) throw new Error("User not found");
+  
+      const currentCoins = userSnap.data().coins || 0;
+  
+      // Check balance
+      if (currentCoins < coins) {
+        throw new Error("Not enough coins to send invite");
+      }
+  
+      // Deduct coins
+      transaction.update(userRef, {
+        coins: currentCoins - coins,
+      });
+  
+      // Create game doc
+      const gameRef = doc(collection(db, "games"));
+      transaction.set(gameRef, {
+        player1_id: user.uid,
+        player2_id: selectedId,
+        player1_dare: dare,
+        player2_dare: null,
+        status: "pending",
+        coins: coins,
+      });
     });
-
-    navigation.navigate('GameStart', { 
-      type: 'friend', 
+  
+    // Navigate after transaction is committed
+    navigation.navigate("GameStart", { 
+      type: "friend", 
       match: {
-        opponentName: friendName,
-        opponentId: friendId,
+        opponentName: selectedName,
+        opponentId: selectedId,
         dare: '',
       }
     });
-  }
+  };
 
 
   return (

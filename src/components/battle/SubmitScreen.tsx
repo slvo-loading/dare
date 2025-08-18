@@ -16,9 +16,7 @@ type SubmitRouteParams = {
   uri: NewSubmission[];
   battleId: string;
   dare: string;
-  gameMode: string;
   caption: string | null;
-  draft: boolean;
 };
 
 type SubmitRouteProp = RouteProp<
@@ -33,7 +31,7 @@ type NewSubmission = {
 
 export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScreen'>) {
   const route = useRoute<SubmitRouteProp>();
-  const { uri, battleId, dare, gameMode, draft} = route.params;
+  const { uri, battleId, dare, } = route.params;
   const [caption, setCaption] = useState<string>(route.params.caption || '');
   const [newDare, setNewDare] = useState<string>('');
   const [media, setMedia] = useState<NewSubmission[]>(uri);
@@ -72,24 +70,10 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
     });
     console.log("updated last_submission");
 
-    try {
-      if (gameMode === 'survival') {
-        await updateDoc(battleRef, {
-          [`${player1 ? "player2_dare" : "player1_dare"}`]: arrayRemove(dare),
-          [`${player1 ? "player1_dare" : "player2_dare"}`]: arrayUnion(newDare)
-        });
-      }
-
-      setNewDare('');
-      setCaption('');
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "BattleScreen" }],
-      });
-
-    } catch (error) {
-      console.error("Error submitting data:", error);
-    }
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "BattleScreen" }],
+    });
   }
 
   async function uploadAllMedia() {
@@ -188,7 +172,7 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
               routes: [
                 {
                   name: "ResponseScreen",
-                  params: { battleId: battleId, dare: dare, gameMode: gameMode },
+                  params: { battleId: battleId, dare: dare },
                 },
               ],
             })
@@ -234,21 +218,6 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
             marginBottom: 12,
           }}
         />
-        {gameMode === 'survival' ? (
-          <TextInput
-          value={newDare}
-          onChangeText={setNewDare}
-          placeholder="Write a dare for your opponent"
-          style={{
-            borderWidth: 1,
-            borderColor: '#ccc',
-            padding: 12,
-            marginBottom: 12,
-          }}
-        />
-        ) : (
-          <View></View>
-        )}
         <Button
           title="Save to Draft"
           onPress={handleDraft}

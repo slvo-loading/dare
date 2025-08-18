@@ -1,4 +1,4 @@
-import { SafeAreaView, View, Text, Button, ScrollView, TouchableOpacity, Image } from "react-native";
+import { SafeAreaView, View, Text, Button, ScrollView, TouchableOpacity, Image, Modal } from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { use, useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -22,12 +22,11 @@ type Battle =
 {
   battleId: string;
   opponentId: string;
-  updated_at: any;
   opponentName: string,
   avatarUrl: string,
   users_dare: string,
   status: string, 
-  gameMode: string,
+  coins: number,
 }
 
 type Completed = 
@@ -40,6 +39,7 @@ type Completed =
   winner: string,
   startDate: any,
   endDate: any,
+  coins: number,
 }
 
 export default function BattleScreen({ navigation }: BattleStackProps<'BattleScreen'>) {
@@ -49,12 +49,16 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   const [pendingOutRequests, setPendingOutRequests] = useState<Battle[]>([]);
   const [completedGames, setCompletedGames] = useState<Completed[]>([]);
   const [archivedGames, setArchivedGames] = useState<Completed[]>([]);
+  const [brokeModal, setBrokeModal] = useState(false);
+  const [availableCoins, setAvailableCoins] = useState<number>(0);
+  const [acceptModal, setAcceptModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // refetches everything everytime you change the screen ...hmmmm
   useFocusEffect(
     useCallback(() => {
       fetchBattles();
+      fetchCoins();
       setLoading(false);
     }, [])
   )
@@ -85,22 +89,20 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             battleId: doc.id,
             opponentId: data.player2_id,
             users_dare: data.player1_dare[0] || 'Waiting for dare',
-            updated_at: data.updated_at,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
-            gameMode: data.game_mode
+            coins: data.coins
           });
         } else if (data.status === 'pending' || data.status === 'declined') {
           pendingOutRequests.push({
             battleId: doc.id,
             opponentId: data.player2_id,
             users_dare: data.player1_dare[0] || 'Waiting for dare',
-            updated_at: data.updated_at,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
-            gameMode: data.game_mode
+            coins: data.coins
           });
         } else if (data.status === 'completed' && !data.player1_status) {
           completedGames.push({
@@ -111,7 +113,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             avatarUrl: '',
             startDate: data.start_date,
             endDate: data.end_date,
-            winner: data.winner
+            winner: data.winner,
+            coins: data.coins
           });
         } else if (data.status === 'completed' && data.player1_status === 'archived') {
           archivedGames.push({
@@ -122,7 +125,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             avatarUrl: '',
             startDate: data.start_date,
             endDate: data.end_date,
-            winner: data.winner
+            winner: data.winner,
+            coins: data.coins,
           });
         }
       });
@@ -134,22 +138,20 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
           battleId: doc.id,
           opponentId: data.player1_id,
           users_dare: data.player1_dare[0] || 'Waiting for dare',
-          updated_at: data.updated_at,
           status: data.status,
           opponentName: '',
           avatarUrl: '',
-          gameMode: data.game_mode
+          coins: data.coins
         });
       } else if (data.status === 'pending') {
           pendingInRequests.push({
             battleId: doc.id,
             opponentId: data.player1_id,
             users_dare: data.player1_dare[0] || 'Waiting for dare',
-            updated_at: data.updated_at,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
-            gameMode: data.game_mode
+            coins: data.coins,
           });
         } else if (data.status === 'completed' && !data.player2_status) {
           completedGames.push({
@@ -160,30 +162,27 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             avatarUrl: '',
             startDate: data.start_date,
             endDate: data.end_date,
-            winner: data.winner
+            winner: data.winner,
+            coins: data.coins
           });
         }
         else if (data.status === 'completed' && data.player2_status === 'archived') {
           archivedGames.push({
             battleId: doc.id,
-            opponentId: data.player2_id,
+            opponentId: data.player1_id,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
             startDate: data.start_date,
             endDate: data.end_date,
-            winner: data.winner
+            winner: data.winner,
+            coins: data.coins
           });
         }
       });
 
       const battleData = await Promise.all(
         battles
-        .sort((a, b) => {
-          const aTime = a.updated_at?.toMillis?.() || 0;
-          const bTime = b.updated_at?.toMillis?.() || 0;
-          return bTime - aTime
-        })
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
@@ -199,11 +198,6 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
 
       const pendingInData = await Promise.all(
         pendingInRequests
-        .sort((a, b) => {
-          const aTime = a.updated_at?.toMillis?.() || 0;
-          const bTime = b.updated_at?.toMillis?.() || 0;
-          return bTime - aTime
-        })
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
@@ -218,11 +212,35 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
 
       const pendingOutData = await Promise.all(
         pendingOutRequests
-        .sort((a, b) => {
-          const aTime = a.updated_at?.toMillis?.() || 0;
-          const bTime = b.updated_at?.toMillis?.() || 0;
-          return bTime - aTime
+        .map(async (battle) => {
+          const opponentRef = doc(db, "users", battle.opponentId);
+          const opponentSnap = await getDoc(opponentRef);
+          const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
+          return {
+            ... battle,
+            opponentName: opponentData?.username,
+            avatarUrl: opponentData?.avatar_url
+          }
         })
+      )
+
+      const completedGamesData = await Promise.all(
+        completedGames
+        .map(async (battle) => {
+          const opponentRef = doc(db, "users", battle.opponentId);
+          const opponentSnap = await getDoc(opponentRef);
+          const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
+          return {
+            ... battle,
+            opponentName: opponentData?.username,
+            avatarUrl: opponentData?.avatar_url
+          }
+        })
+      )
+
+
+      const archivedGamesData = await Promise.all(
+        archivedGames
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
@@ -238,8 +256,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
       setBattleList(battleData);
       setPendingInRequests(pendingInData);
       setPendingOutRequests(pendingOutData);
-      setCompletedGames(completedGames);
-      setArchivedGames(archivedGames);
+      setCompletedGames(completedGamesData);
+      setArchivedGames(archivedGamesData);
 
     } catch (err) {
       console.error("Error fetching battles:", err);
@@ -251,82 +269,32 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   };
 
 
-  // const fetchPendingInRequests = async () => {
-  //   if (!user) return;
-
-  //   try {
-  //     const player2Query = query(collection(db, "games"), where("player2_id", "==", user.uid), where("status", "==", "pending"));
-  
-  //     const [player2Snap] = await Promise.all([
-  //     getDocs(player2Query),
-  //     ]);
-
-  //     // 2. Extract the other person’s ID in each case
-  //     const battles: Battle[] = [];
-  
-  //     player2Snap.forEach(doc => {
-  //       const data = doc.data();
-  //       battles.push({
-  //         battleId: doc.id,
-  //         opponentId: data.player1_id,
-  //         users_dare: data.player1_dare[0] || 'Waiting for dare',
-  //         updated_at: data.updated_at,
-  //         status: data.status,
-  //         opponentName: '',
-  //         avatarUrl: '',
-  //         gameMode: data.game_mode
-  //       });
-  //     });
-
-  //     const battleData = await Promise.all(
-  //       battles
-  //       .sort((a, b) => {
-  //         const aTime = a.updated_at?.toMillis?.() || 0;
-  //         const bTime = b.updated_at?.toMillis?.() || 0;
-  //         return bTime - aTime
-  //       })
-  //       .map(async (battle) => {
-  //         const opponentRef = doc(db, "users", battle.opponentId);
-  //         const opponentSnap = await getDoc(opponentRef);
-  //         const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
-
-  //         return {
-  //           ... battle,
-  //           opponentName: opponentData?.username,
-  //           avatarUrl: opponentData?.avatar_url
-  //         }
-  //       })
-  //     )
-
-  //     setPendingInRequests(battleData);
-
-  //   } catch (err) {
-  //     console.error("Error fetching battles:", err);
-  //   }
-  // }
-
-  const acceptRequest = async (battleId: string) => {
-
-    const ref = doc(db, 'games', battleId);
-    await updateDoc(ref, {
-        status: 'active',
-    });
-
-    setPendingInRequests(prevPending => {
-      const battleToMove = prevPending.find(b => b.battleId === battleId);
-      if (!battleToMove) return prevPending; 
-
-      const updatedPending = prevPending.filter(b => b.battleId !== battleId);
+  const fetchCoins = async () => {
+    if (!user) return;
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setAvailableCoins(data.coins || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching coins:", error);
+      return 0;
+    }
+  }
 
 
-      setBattleList(prevBattles => [battleToMove, ...prevBattles]);
+  const viewRequest = async (battle: Battle) => {
+    if (availableCoins <= 0) {
+      setBrokeModal(true);
+      return;
+    } else {
+      navigation.navigate('HabitConfig', { type: 'accept', battle: battle, });
+    }
+  }
 
-      return updatedPending;
-    });
-  };
 
-
-  const declineRequest = async (battleId: string) => {
+  const declineRequest = async (battleId: string) => { // this needs to put back the coins to the person that sent the request
     const ref = doc(db, 'games', battleId);
     await updateDoc(ref, {
         status: 'declined',
@@ -338,72 +306,6 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
     });
   };
 
-  // const fetchPendingOutRequests = async () => {
-  //   if (!user) return;
-
-  //   try {
-  //     const player1Query = query(collection(db, "games"), where("player1_id", "==", user.uid), where("status", "in", ["pending", "declined"]));
-  
-  //     const [player1Snap] = await Promise.all([
-  //     getDocs(player1Query),
-  //     ]);
-
-  //     // 2. Extract the other person’s ID in each case
-  //     const battles: Battle[] = [];
-  
-  //     player1Snap.forEach(doc => {
-  //       const data = doc.data();
-  //       battles.push({
-  //         battleId: doc.id,
-  //         opponentId: data.player2_id,
-  //         users_dare: data.player1_dare[0] || 'Waiting for dare',
-  //         updated_at: data.updated_at,
-  //         status: data.status,
-  //         opponentName: '',
-  //         avatarUrl: '',
-  //         gameMode: data.game_mode
-  //       });
-  //     });
-
-  //     const battleData = await Promise.all(
-  //       battles
-  //       .sort((a, b) => {
-  //         const aTime = a.updated_at?.toMillis?.() || 0;
-  //         const bTime = b.updated_at?.toMillis?.() || 0;
-  //         return bTime - aTime
-  //       })
-  //       .map(async (battle) => {
-  //         const opponentRef = doc(db, "users", battle.opponentId);
-  //         const opponentSnap = await getDoc(opponentRef);
-  //         const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
-
-  //         return {
-  //           ... battle,
-  //           opponentName: opponentData?.username,
-  //           avatarUrl: opponentData?.avatar_url
-  //         }
-  //       })
-  //     )
-
-  //     setPendingOutRequests(battleData);
-
-  //   } catch (err) {
-  //     console.error("Error fetching battles:", err);
-  //   }
-  // }
-
-  const cancelRequest = async (battleId: string) => {
-    console.log("Canceling request for battleId:", battleId);
-    const ref = doc(db, 'games', battleId);
-    await deleteDoc(ref);
-
-    setPendingOutRequests(prevPending => {
-      const updatedPending = prevPending.filter(b => b.battleId !== battleId);
-      return updatedPending;
-    });
-    
-    
-  };
 
 const handleStatus = async (battleId: string, status: string) => {
   if (!user) return;
@@ -427,6 +329,14 @@ const handleStatus = async (battleId: string, status: string) => {
     const updatedPending = prevPending.filter(b => b.battleId !== battleId);
     return updatedPending;
   });
+}
+
+const newBattle = () => {
+  if(availableCoins <= 0) {
+    setBrokeModal(true);
+    return;
+  } else {
+    navigation.navigate('OpponentSelection');}
 }
 
 const handlePin = async (battle: Completed) => {
@@ -463,7 +373,7 @@ const handlePin = async (battle: Completed) => {
     <SafeAreaView>
       <Button 
       title="New Battle"
-      onPress={() => navigation.navigate('OpponentSelection')}/>
+      onPress={newBattle}/>
       { pendingOutRequests.length > 0 && (
         <View>
         <Text>Outgoing Requests</Text>
@@ -482,9 +392,9 @@ const handlePin = async (battle: Completed) => {
                     <Text style={{ fontWeight: 'bold' }}>{battle.opponentName}</Text>
                     <Text style={{ color: '#666' }}>{battle.opponentName}</Text>
                 </TouchableOpacity>
-                <Text style={{ color: '#666', marginRight: 10 }}>dare sent: {battle.users_dare}</Text>
+                <Text style={{ color: '#666', marginRight: 10 }}>dare: {battle.users_dare}</Text>
+                <Text style={{ color: '#666', marginRight: 10 }}>coins bet: {battle.coins}</Text>
                 <Text style={{ color: '#666', marginRight: 10 }}>status: {battle.status}</Text>
-                <Button title="Delete" onPress={() => cancelRequest(battle.battleId)}/>
                 </View>
           ))}
         </ScrollView>
@@ -509,7 +419,8 @@ const handlePin = async (battle: Completed) => {
                     <Text style={{ color: '#666' }}>{battle.opponentName}</Text>
                 </TouchableOpacity>
                 <Text style={{ color: '#666', marginRight: 10 }}>{battle.users_dare}</Text>
-                  <TouchableOpacity onPress={() => acceptRequest(battle.battleId)}>
+                <Text style={{ color: '#666', marginRight: 10 }}>coins bet: {battle.coins}</Text>
+                  <TouchableOpacity onPress={() => viewRequest(battle)}>
                       <Text style={{ color: 'blue' }}>Accept</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => declineRequest(battle.battleId)}>
@@ -538,6 +449,7 @@ const handlePin = async (battle: Completed) => {
                     <Text style={{ fontWeight: 'bold' }}>{battle.opponentName}</Text>
                     <Text style={{ color: '#666' }}>{battle.opponentName}</Text>
                 </TouchableOpacity>
+                <Text>coins bet: {battle.coins}</Text>
                 <Button title="Results" onPress={() => navigation.navigate('ResultScreen', { battle: battle })}/>
                 </View>
           ))}
@@ -561,7 +473,8 @@ const handlePin = async (battle: Completed) => {
               <Text style={{ color: '#666' }}>{battle.opponentName}</Text>
           </TouchableOpacity>
           <Text style={{ color: '#666', marginRight: 10 }}>{battle.users_dare}</Text>
-          <Button title="Battle" onPress={() => navigation.navigate("ResponseScreen", {battleId: battle.battleId, dare: battle.users_dare, gameMode: battle.gameMode})}/>
+          <Text style={{ color: '#666', marginRight: 10 }}>coins bet: {battle.coins}</Text>
+          <Button title="Battle" onPress={() => navigation.navigate("ResponseScreen", {battleId: battle.battleId, dare: battle.users_dare})}/>
           </View>
       ))}
   </ScrollView>
@@ -594,6 +507,20 @@ const handlePin = async (battle: Completed) => {
     </ScrollView>
   </View>
   )}
+      <Modal
+      visible={brokeModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setBrokeModal(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ width: 300, padding: 20, backgroundColor: '#fff', borderRadius: 10 }}>
+            <Text>Haha you're broke :P.</Text>
+            <Button title="Get more coins"/>
+            <Button title="Cancel" onPress={() => setBrokeModal(false)} />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

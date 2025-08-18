@@ -13,7 +13,6 @@ import PostView from "./PostView";
 type ResponseRouteParams = {
     battleId: string;
     dare: string;
-    gameMode: string;
 };
   
 type ResponseRouteProp = RouteProp<
@@ -38,7 +37,7 @@ const { height } = Dimensions.get('window');
 
 export default function ResponseScreen({ navigation }: BattleStackProps<'ResponseScreen'>) {
   const route = useRoute<ResponseRouteProp>();
-  const { gameMode, battleId, dare } = route.params;
+  const { battleId, dare } = route.params;
 
   const [permission, requestPermission] = useCameraPermissions();
   const ref = useRef<CameraView>(null);
@@ -149,7 +148,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
           {newSubmission.length > 0 && (
           <Pressable onPress={() => 
             navigation.navigate('SubmitScreen', 
-            {uri: newSubmission, battleId: battleId, dare: dare, gameMode: gameMode, caption: null, draft: false})}>
+            {uri: newSubmission, battleId: battleId, dare: dare, caption: null,})}>
               <Text style={{ color: 'white' }}>Submit</Text>
             </Pressable>
           )}
@@ -176,7 +175,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
           </Pressable>
           <Pressable onPress={() => 
             navigation.navigate('DraftPickScreen', 
-            { battleId: battleId, dare: dare, gameMode: gameMode})}>
+            { battleId: battleId, dare: dare,})}>
               <Text style={{ color: 'white' }}>Drafts</Text>
             </Pressable>
           <Pressable onPress={toggleFacing}>

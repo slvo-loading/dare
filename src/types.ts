@@ -41,17 +41,27 @@ type Completed =
   endDate: any,
 }
 
+type Battle = 
+{
+  battleId: string;
+  opponentId: string;
+  opponentName: string,
+  avatarUrl: string,
+  users_dare: string,
+  status: string, 
+  coins: number,
+}
+
 export type BattleStackParamList = {
     BattleScreen: undefined;
-    ResponseScreen: { battleId: string; dare: string; gameMode: string };
-    SubmitScreen: { uri: NewSubmission[]; battleId: string; dare: string; gameMode: string; caption: string | null, draft: boolean};
-    DraftPickScreen: { battleId: string; dare: string; gameMode: string };
+    ResponseScreen: { battleId: string; dare: string; };
+    SubmitScreen: { uri: NewSubmission[]; battleId: string; dare: string; caption: string | null, };
+    DraftPickScreen: { battleId: string; dare: string; };
     ResultScreen: { battle: Completed;};
-
-    HabitConfig:  { type: string; };
+    HabitConfig: { type: string; battle: Battle | null; };
     OpponentSelection: undefined;
-    InviteFriend: { dare: string, gameMode: string};
-    Matchmaking: { dare: { userName: string, userId: string, dare: string }, gameMode: string};
+    InviteFriend: { dare: string, coins: number};
+    Matchmaking: { dare: { userName: string, userId: string, dare: string, coins: number}};
     GameStart: { type: string; match: { opponentName: string, opponentId: string, dare: string} };
 }
 

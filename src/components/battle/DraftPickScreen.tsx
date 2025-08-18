@@ -19,7 +19,6 @@ type Media = {
 type DraftRouteParams = {
     battleId: string;
     dare: string;
-    gameMode: string;
 };
 
 type DraftRouteProp = RouteProp<
@@ -30,7 +29,7 @@ type DraftRouteProp = RouteProp<
 
 export default function DraftPickScreen({ navigation }: BattleStackProps<'DraftPickScreen'> ) {
     const route = useRoute<DraftRouteProp>();
-    const { gameMode, battleId, dare } = route.params;
+    const { battleId, dare } = route.params;
 
     const { user } = useAuth();
     const [drafts, setDrafts] = useState<Media[]>([]);
@@ -71,7 +70,7 @@ export default function DraftPickScreen({ navigation }: BattleStackProps<'DraftP
 
     navigation.navigate('SubmitScreen', 
         {uri: selectedDraft.media, battleId: battleId, 
-        dare: dare, gameMode: gameMode, caption: selectedDraft.caption, draft: true})
+        dare: dare, caption: selectedDraft.caption,})
  }
 
 useEffect(() => {

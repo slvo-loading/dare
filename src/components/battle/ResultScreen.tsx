@@ -16,6 +16,7 @@ import {
     serverTimestamp,
     updateDoc,
     writeBatch,
+    runTransaction
   } from 'firebase/firestore';
 
 type Completed = 
@@ -93,6 +94,39 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
       await batch.commit();
     }
 
+    const claimCoins = async () => {
+        if (!user) return;
+
+        await runTransaction(db, async (transaction) => {
+            const gameRef = doc(db, 'games', battle.battleId);
+            const gameSnap = await transaction.get(gameRef);
+
+            if (!gameSnap.exists()) {
+                throw new Error("Game not found");
+            }
+
+            const gameData = gameSnap.data();
+
+            if (gameData.winner !== user.uid) {
+                throw new Error("You are not the winner of this game");
+            }
+
+            const coins = gameData.coins || 0;
+            const userRef = doc(db, 'users', user.uid);
+            const userSnap = await transaction.get(userRef);
+
+            if (!userSnap.exists()) {
+                throw new Error("User not found");
+            }
+
+            const currCoins = userSnap.data().coins;
+
+            transaction.update(userRef, {
+                coins: currCoins + coins
+            });
+        })
+    }
+
   return (
     <SafeAreaView>
         {battle.winner === user?.uid ? (
@@ -102,6 +136,7 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
         )}
         <Button title="Delete" onPress={() => {
             handleStatus('deleted');
+            claimCoins();
             navigation.reset({
                 index: 0,
                 routes: [{ name: "BattleScreen" }],
@@ -109,6 +144,7 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
         }}/>
         <Button title="Archive" onPress={() => {
             handleStatus('archived');
+            claimCoins();
             navigation.reset({
                 index: 0,
                 routes: [{ name: "BattleScreen" }],
@@ -116,6 +152,7 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
         }}/>
         <Button title="Pin to Profile" onPress={() => {
             handlePin();
+            claimCoins();
             navigation.reset({
                 index: 0,
                 routes: [{ name: "BattleScreen" }],
