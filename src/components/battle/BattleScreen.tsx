@@ -10,10 +10,8 @@ import {
   where, 
   getDocs, 
   doc, 
-  getDoc, 
-  deleteDoc, 
-  setDoc, 
-  serverTimestamp,
+  getDoc,
+  runTransaction,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
@@ -294,17 +292,40 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   }
 
 
-  const declineRequest = async (battleId: string) => { // this needs to put back the coins to the person that sent the request
-    const ref = doc(db, 'games', battleId);
-    await updateDoc(ref, {
+  const declineRequest = async (battleId: string, opponentId: string) => {
+    if (!user) return;
+  
+    const userRef = doc(db, 'users', opponentId);
+    const battleRef = doc(db, 'games', battleId);
+  
+    await runTransaction(db, async (transaction) => {
+      const userSnap = await transaction.get(userRef);
+      const battleSnap = await transaction.get(battleRef);
+  
+      if (!userSnap.exists() || !battleSnap.exists()) {
+        throw new Error("User or battle not found");
+      }
+  
+      const currCoins = userSnap.data().coins || 0;
+      const battleCoins = battleSnap.data().coins || 0;
+  
+      // Give coins back
+      transaction.update(userRef, {
+        coins: currCoins + battleCoins,
+      });
+  
+      // Optionally mark the battle as declined
+      transaction.update(battleRef, {
         status: 'declined',
+      });
     });
-
-    setPendingInRequests(prevPending => {
-      const updatedPending = prevPending.filter(b => b.battleId !== battleId);
-      return updatedPending;
-    });
+  
+    // Update UI after transaction
+    setPendingInRequests(prevPending => 
+      prevPending.filter(b => b.battleId !== battleId)
+    );
   };
+  
 
 
 const handleStatus = async (battleId: string, status: string) => {
@@ -423,7 +444,7 @@ const handlePin = async (battle: Completed) => {
                   <TouchableOpacity onPress={() => viewRequest(battle)}>
                       <Text style={{ color: 'blue' }}>Accept</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => declineRequest(battle.battleId)}>
+                  <TouchableOpacity onPress={() => declineRequest(battle.battleId, battle.opponentId)}>
                       <Text style={{ color: 'red' }}>Decline</Text>
                   </TouchableOpacity>
                 </View>

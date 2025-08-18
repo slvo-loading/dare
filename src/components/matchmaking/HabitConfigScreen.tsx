@@ -13,7 +13,7 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
   const { type, battle } = route.params;
   const [dare, setDare] = useState<string>('');
   const { user } = useAuth();
-  const [betCoins, setBetCoins] = useState<number>(0);
+  const [betCoins, setBetCoins] = useState<number>(1);
   const [availableCoins, setAvailableCoins] = useState<number>(0);
   const [showModal, setShowModal] = useState<boolean>(true);
 
@@ -48,39 +48,39 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
         // Get fresh user data
         try {
           const userSnap = await transaction.get(userRef);
-        const battleSnap = await transaction.get(battleRef);
+          const battleSnap = await transaction.get(battleRef);
 
-        if (!userSnap.exists() || !battleSnap.exists()) throw new Error("User or battle does not exist");
-    
-        const userCoins = userSnap.data().coins || 0;
-        const battleCoins = battleSnap.data().coins || 0;
-    
-        // Check balance
-        if (userCoins < betCoins) {
-          throw new Error("Not enough coins to send invite");
-        }
-    
-        // Deduct coins
-        transaction.update(userRef, {
-          coins: userCoins - betCoins,
-        });
-
-        transaction.update(battleRef, {
-          status: 'active',
-          coins: battleCoins + betCoins,
-          player2_dare: dare,
-          start_date: Timestamp.now()
-        })
-
-      // Navigate after transaction is committed
-        navigation.navigate("GameStart", { 
-          type: "accept", 
-          match: {
-            opponentName: battle.opponentName,
-            opponentId: battle.opponentId,
-            dare: battle.users_dare,
+          if (!userSnap.exists() || !battleSnap.exists()) throw new Error("User or battle does not exist");
+      
+          const userCoins = userSnap.data().coins || 0;
+          const battleCoins = battleSnap.data().coins || 0;
+      
+          // Check balance
+          if (userCoins < betCoins) {
+            throw new Error("Not enough coins to send invite");
           }
-        });
+      
+          // Deduct coins
+          transaction.update(userRef, {
+            coins: userCoins - betCoins,
+          });
+
+          transaction.update(battleRef, {
+            status: 'active',
+            coins: battleCoins + betCoins,
+            player2_dare: dare,
+            start_date: Timestamp.now()
+          })
+
+        // Navigate after transaction is committed
+          navigation.navigate("GameStart", { 
+            type: "accept", 
+            match: {
+              opponentName: battle.opponentName,
+              opponentId: battle.opponentId,
+              dare: battle.users_dare,
+            }
+          });
 
         } catch (error) {
           console.error("Transaction failed:", error);
