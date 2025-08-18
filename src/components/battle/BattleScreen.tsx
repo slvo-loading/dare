@@ -25,6 +25,7 @@ type Battle =
   users_dare: string,
   status: string, 
   coins: number,
+  allowSubmission: boolean,
 }
 
 type Completed = 
@@ -79,9 +80,16 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
       const pendingOutRequests: Battle[] = [];
       const completedGames: Completed[] = [];
       const archivedGames: Completed[] = [];
+
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+    
   
       player1Snap.forEach(doc => {
         const data = doc.data();
+        const lastSubDate = data.player1_last_submission.toDate().toISOString().split("T")[0];
+        const allowSubs = lastSubDate === today;
+
         if (data.status === 'active') {
           battles.push({
             battleId: doc.id,
@@ -90,7 +98,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             status: data.status,
             opponentName: '',
             avatarUrl: '',
-            coins: data.coins
+            coins: data.coins,
+            allowSubmission: allowSubs,
           });
         } else if (data.status === 'pending' || data.status === 'declined') {
           pendingOutRequests.push({
@@ -100,7 +109,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             status: data.status,
             opponentName: '',
             avatarUrl: '',
-            coins: data.coins
+            coins: data.coins,
+            allowSubmission: allowSubs,
           });
         } else if (data.status === 'completed' && !data.player1_status) {
           completedGames.push({
@@ -131,6 +141,10 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   
       player2Snap.forEach(doc => {
         const data = doc.data();
+
+        const lastSubDate = data.player1_last_submission.toDate().toISOString().split("T")[0];
+        const allowSubs = lastSubDate === today;
+        
         if (data.status === 'active') {
         battles.push({
           battleId: doc.id,
@@ -139,7 +153,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
           status: data.status,
           opponentName: '',
           avatarUrl: '',
-          coins: data.coins
+          coins: data.coins,
+          allowSubmission: allowSubs,
         });
       } else if (data.status === 'pending') {
           pendingInRequests.push({
@@ -150,6 +165,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             opponentName: '',
             avatarUrl: '',
             coins: data.coins,
+            allowSubmission: allowSubs,
           });
         } else if (data.status === 'completed' && !data.player2_status) {
           completedGames.push({
@@ -495,7 +511,7 @@ const handlePin = async (battle: Completed) => {
           </TouchableOpacity>
           <Text style={{ color: '#666', marginRight: 10 }}>{battle.users_dare}</Text>
           <Text style={{ color: '#666', marginRight: 10 }}>coins bet: {battle.coins}</Text>
-          <Button title="Battle" onPress={() => navigation.navigate("ResponseScreen", {battleId: battle.battleId, dare: battle.users_dare})}/>
+          <Button title="Battle" disabled={battle.allowSubmission} onPress={() => navigation.navigate('ResponseScreen', {battleId: battle.battleId, dare: battle.users_dare})}/>
           </View>
       ))}
   </ScrollView>
