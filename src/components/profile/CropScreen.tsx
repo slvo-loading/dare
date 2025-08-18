@@ -2,8 +2,10 @@ import { View, Text, Button, SafeAreaView, Image, StyleSheet, Dimensions } from 
 import { ProfileStackProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useAuth } from "../../context/AuthContext";
-import { db } from "../../../firebaseConfig";
-import { updateDoc, doc, } from "firebase/firestore";
+import { db, storage } from "../../../firebaseConfig";
+import { updateDoc, doc,  } from "firebase/firestore";
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
+
 import React from "react";
 
 type CropScreenRouteParams = {
@@ -28,15 +30,27 @@ export default function CropScreen({ navigation }: ProfileStackProps<'CropScreen
     }
 
     try {
+      const downloadUrl = await uploadMedia();
+
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        avatar_url: imageUri,
+        avatar_url: downloadUrl,
     });
 
       navigation.navigate('ProfileScreen');
     } catch (error) {
       console.error("Error updating profile:", error);
     }
+  }
+
+  const uploadMedia = async () => {
+    if (!user) return;
+
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    const storageRef = ref(storage, `avatars/${user.uid}`);
+    await uploadBytes(storageRef, blob);
+    return await getDownloadURL(storageRef);
   }
 
   return (

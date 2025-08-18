@@ -29,6 +29,7 @@ type Completed =
   winner: string,
   startDate: any,
   endDate: any,
+  users_dare: string,
 }
 
 type ResultRouteParams = {
@@ -65,33 +66,45 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
     }
     
     const handlePin = async () => {
+      let step = 0;
       if (!user) return;
+      console.log(step++);//0
       handleStatus('pinned');
-    
-      const batch = writeBatch(db);
-      const q = query(
-        collection(db, 'games', battle.battleId, 'submissions'),
-        where('user_id', '==', user.uid)
-      );
-    
-      const submissionsSnap = await getDocs(q);
-    
-      const pinnedGamesRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId);
-      batch.set(pinnedGamesRef, {
-        winner: battle.winner,
-        opponent_id: battle.opponentId,
-        opponent_name: battle.opponentName,
-        opponent_avatar: battle.avatarUrl,
-        start_date: battle.startDate,
-        end_date: battle.endDate,
-      });
-    
-      submissionsSnap.forEach(sub => {
-        const pinnedSubRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId, 'submissions', sub.id);
-        batch.set(pinnedSubRef, sub.data());
-      });
-    
-      await batch.commit();
+      console.log(step++);//1
+
+      try {
+        const batch = writeBatch(db);
+        console.log(step++);//2
+        const q = query(
+          collection(db, 'games', battle.battleId, 'submissions'),
+          where('user_id', '==', user.uid)
+        );
+        console.log(step++);//3
+      
+        const submissionsSnap = await getDocs(q);
+        console.log(step++);//4
+      
+        const pinnedGamesRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId);
+        batch.set(pinnedGamesRef, {
+          winner: battle.winner,
+          opponent_avatar: battle.avatarUrl,
+          dare: battle.users_dare,
+          opponent_id: battle.opponentId,
+        });
+        console.log(step++);
+      
+        submissionsSnap.forEach(sub => {
+          const pinnedSubRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId, 'submissions', sub.id);
+          batch.set(pinnedSubRef, sub.data());
+        });
+        console.log(step++);
+      
+        await batch.commit();
+        console.log(step++);
+
+      } catch (error) {
+        console.error("Error pinning game:", error);
+      }
     }
 
     const claimCoins = async () => {

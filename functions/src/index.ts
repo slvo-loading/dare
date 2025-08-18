@@ -83,7 +83,7 @@ export const checkDailySubmissions = onSchedule(
           player1_status: null,
           player2_status: null,
           winner: winner,
-          ended_at: Timestamp.now(),
+          end_date: Timestamp.now(),
         });
       }
     }

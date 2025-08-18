@@ -52,7 +52,6 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
     const submissionData = {
       user_id: user.uid, 
       media: updatedMedia, 
-      dare: dare,
       submitted_at: serverTimestamp(),
       caption: caption,
     }

@@ -156,7 +156,6 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
             <Text style={{ color: '#666' }}>name: {userProfile.name}</Text>
             <Text style={{ color: '#666' }}>bio: {userProfile.bio}</Text>
             <Button title={`${userProfile.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList')}/>
-            <Text>Rank: {userProfile.rank}</Text>
 
           <Button title="Add an interest" onPress={() => navigation.navigate('AddInterests')}/>
           {interests.length > 0 ? (

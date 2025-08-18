@@ -14,6 +14,7 @@ import {
   runTransaction,
   updateDoc,
   writeBatch,
+  deleteDoc
 } from 'firebase/firestore';
 
 type Battle = 
@@ -39,6 +40,7 @@ type Completed =
   startDate: any,
   endDate: any,
   coins: number,
+  users_dare: string;
 }
 
 export default function BattleScreen({ navigation }: BattleStackProps<'BattleScreen'>) {
@@ -87,14 +89,20 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   
       player1Snap.forEach(doc => {
         const data = doc.data();
-        const lastSubDate = data.player1_last_submission.toDate().toISOString().split("T")[0];
-        const allowSubs = lastSubDate === today;
+
+        const lastSubDate = data.player1_last_submission?.toDate().toISOString().split("T")[0] || null;
+        let allowSubs;
+        if (lastSubDate) {
+          allowSubs = lastSubDate === today;
+        } else {
+          allowSubs = false;
+        }
 
         if (data.status === 'active') {
           battles.push({
             battleId: doc.id,
             opponentId: data.player2_id,
-            users_dare: data.player1_dare[0] || 'Waiting for dare',
+            users_dare: data.player2_dare,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
@@ -105,7 +113,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
           pendingOutRequests.push({
             battleId: doc.id,
             opponentId: data.player2_id,
-            users_dare: data.player1_dare[0] || 'Waiting for dare',
+            users_dare: data.player2_dare,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
@@ -122,7 +130,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             startDate: data.start_date,
             endDate: data.end_date,
             winner: data.winner,
-            coins: data.coins
+            coins: data.coins,
+            users_dare: data.player2_dare
           });
         } else if (data.status === 'completed' && data.player1_status === 'archived') {
           archivedGames.push({
@@ -135,6 +144,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             endDate: data.end_date,
             winner: data.winner,
             coins: data.coins,
+            users_dare: data.player2_dare
           });
         }
       });
@@ -142,14 +152,19 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
       player2Snap.forEach(doc => {
         const data = doc.data();
 
-        const lastSubDate = data.player1_last_submission.toDate().toISOString().split("T")[0];
-        const allowSubs = lastSubDate === today;
-        
+        const lastSubDate = data.player2_last_submission?.toDate().toISOString().split("T")[0] || null;
+        let allowSubs;
+        if (lastSubDate) {
+          allowSubs = lastSubDate === today;
+        } else {
+          allowSubs = false;
+        }
+
         if (data.status === 'active') {
         battles.push({
           battleId: doc.id,
           opponentId: data.player1_id,
-          users_dare: data.player1_dare[0] || 'Waiting for dare',
+          users_dare: data.player1_dare,
           status: data.status,
           opponentName: '',
           avatarUrl: '',
@@ -160,7 +175,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
           pendingInRequests.push({
             battleId: doc.id,
             opponentId: data.player1_id,
-            users_dare: data.player1_dare[0] || 'Waiting for dare',
+            users_dare: data.player1_dare,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
@@ -177,7 +192,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             startDate: data.start_date,
             endDate: data.end_date,
             winner: data.winner,
-            coins: data.coins
+            coins: data.coins,
+            users_dare: data.player1_dare,
           });
         }
         else if (data.status === 'completed' && data.player2_status === 'archived') {
@@ -190,7 +206,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             startDate: data.start_date,
             endDate: data.end_date,
             winner: data.winner,
-            coins: data.coins
+            coins: data.coins,
+            users_dare: data.player1_dare,
           });
         }
       });
@@ -406,6 +423,16 @@ const handlePin = async (battle: Completed) => {
   await batch.commit();
 }
 
+const deleteRequest = async (battleId: string) => {
+  if (!user) return;
+  const ref = doc(db, 'games', battleId);
+  await deleteDoc(ref);
+  setPendingOutRequests(prevPending => {
+    const updatedPending = prevPending.filter(b => b.battleId !== battleId);
+    return updatedPending;
+  });
+  }
+
   return (
     <SafeAreaView>
       <Button 
@@ -432,6 +459,9 @@ const handlePin = async (battle: Completed) => {
                 <Text style={{ color: '#666', marginRight: 10 }}>dare: {battle.users_dare}</Text>
                 <Text style={{ color: '#666', marginRight: 10 }}>coins bet: {battle.coins}</Text>
                 <Text style={{ color: '#666', marginRight: 10 }}>status: {battle.status}</Text>
+                {battle.status === 'declined' && (
+                  <Button title="x" onPress={() => deleteRequest(battle.battleId)}/>
+                )}
                 </View>
           ))}
         </ScrollView>
