@@ -4,7 +4,7 @@ import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/n
 
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
-  FriendsList: undefined;
+  FriendsList: { userId: string };
   OtherProfiles: { userId: string };
 };
 
@@ -81,7 +81,8 @@ export type ProfileStackParamList = {
         bio: string | undefined;
       },
   };
-    FriendsList: undefined;
+    FriendsList: { userId: string };
+    OtherProfiles: { userId: string };
     Settings: undefined;
     CropScreen: { imageUri: string; battle: PinnedBattle | null;  };
     AddInterests: undefined;

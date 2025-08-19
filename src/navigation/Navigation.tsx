@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../types';
 import { db } from '../../firebaseConfig'; 
-import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 import FriendsList from '../components/profile/FriendsList';

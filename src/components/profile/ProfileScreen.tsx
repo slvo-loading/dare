@@ -205,7 +205,7 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
 
   return (
     <SafeAreaView>
-    {loading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
+    {/* {loading ? <ActivityIndicator size="large" color="#0000ff" /> : null} */}
       {userProfile ? (
         <View>
             <Image
@@ -216,7 +216,7 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
             <Text style={{ color: '#666' }}>name: {userProfile.name}</Text>
             <Text style={{ color: '#666' }}>bio: {userProfile.bio}</Text>
             <Text style={{ color: '#666' }}>coins: {userProfile.coins}</Text>
-            <Button title={`${userProfile.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList')}/>
+            <Button title={`${userProfile.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList', { userId: user?.uid || ''})}/>
 
             {pinnedGames.length > 0 && (
           <ScrollView horizontal={true} style={{ marginLeft: 10 }}>
@@ -269,9 +269,9 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
               <View style={styles.modalContainer}>
                 <Button title="X" onPress={() => setShowSubmissions(false)} />
                   {type === 'interests' ? (
-                    <PostView interests={interests} type={type} startIndex={index} />
+                    <PostView interests={interests} type={type} startIndex={index} userId={user?.uid || ''} />
                   ) : (
-                    <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.title || ''} type={type}/>
+                    <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.title || ''} type={type} userId={user?.uid || ''}/>
                   )}
               </View>
             </View>
@@ -298,13 +298,6 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
         title="Settings"
         onPress={() => navigation.navigate('Settings')}
       />
-      <Button 
-        title="Temporary Logout"
-        onPress={() => {
-          tempLogout();
-        }}
-        />
-        {/* <Button title="Sign Out" onPress={logout} /> */}
     </SafeAreaView>
   );
 };

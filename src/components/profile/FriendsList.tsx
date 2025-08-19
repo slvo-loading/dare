@@ -25,8 +25,10 @@ type Friend = {
     last_active: any;
 };
 
-export default function FriendsList({ navigation }: ProfileStackProps<'FriendsList'>) {
+export default function FriendsList({ navigation, route }: ProfileStackProps<'FriendsList'>) {
+    const { userId } = route.params;
     const { user } = useAuth();
+    const self = user?.uid === userId;
     const [friendsList, setFriendsList] = useState<Friend[]>([]);
     const [pendingRequests, setPendingRequests] = useState<Friend[]>([]);
     const [searchUid, setSearchUid] = useState<string>('');
@@ -38,12 +40,12 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
       }, []);
 
     const fetchFriends = async () => {
-        if (!user) return;
+        if (!userId) return;
         
         try {
             // 1. Get all active friendships (both sent and received)
-            const sentQuery = query(collection(db, "friends"), where("sender_id", "==", user.uid), where("status", "==", "active"));
-            const receivedQuery = query(collection(db, "friends"), where("receiver_id", "==", user.uid), where("status", "==", "active"));
+            const sentQuery = query(collection(db, "friends"), where("sender_id", "==", userId), where("status", "==", "active"));
+            const receivedQuery = query(collection(db, "friends"), where("receiver_id", "==", userId), where("status", "==", "active"));
         
             const [sentSnap, receivedSnap] = await Promise.all([
             getDocs(sentQuery),
@@ -105,11 +107,11 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
     }, []);
 
     const fetchPendingRequests = async () => {
-        if (!user) return;
+        if (!userId) return;
         
         try {
             // 1. Get all pending requests friendships
-            const receivedQuery = query(collection(db, "friends"), where("receiver_id", "==", user.uid), where("status", "==", "pending"));
+            const receivedQuery = query(collection(db, "friends"), where("receiver_id", "==", userId), where("status", "==", "pending"));
         
             const [sentSnap] = await Promise.all([
             getDocs(receivedQuery),
@@ -161,10 +163,10 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
 
 
     const unfriendUser = async (friendId: string) => {
-        if(!user) return;
+        if(!userId) return;
         if(!friendId) return;
 
-        const id = [user.uid, friendId].sort().join("_");
+        const id = [userId, friendId].sort().join("_");
         const ref = doc(db, 'friends', id);
         await deleteDoc(ref);
 
@@ -173,14 +175,14 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
 
     //sends a friend request
     const sendFriendRequest = async (friendId: string) => {
-        if (!user) {
+        if (!userId) {
           return;
         }
-        const id = [user.uid, friendId].sort().join("_");
+        const id = [userId, friendId].sort().join("_");
         const ref = doc(db, 'friends', id);
       
         await setDoc(ref, {
-          sender_id: user.uid,
+          sender_id: userId,
           receiver_id: friendId,
           status: 'pending',
           created_at: serverTimestamp(),
@@ -195,9 +197,9 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
     }
 
     const acceptRequest = async (friendId: string) => {
-    if (!user) return;
+    if (!userId) return;
 
-    const id = [user.uid, friendId].sort().join("_");
+    const id = [userId, friendId].sort().join("_");
     const ref = doc(db, 'friends', id);
 
     await updateDoc(ref, {
@@ -220,7 +222,7 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
     }, [friendsList]);
 
     const handleSearchUid = async (enteredUid: string) => {
-        if (!user) {
+        if (!userId) {
             console.log("User not authenticated.");
             return;
         }
@@ -243,7 +245,7 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
         }
         const userData = userDoc.data();
 
-        const id = [user.uid, enteredUid].sort().join("_");
+        const id = [userId, enteredUid].sort().join("_");
         const ref = doc(db, 'friends', id);
         const snapshot = await getDoc(ref);
         const status = snapshot.exists() ? snapshot.data().status : 'none';
@@ -264,6 +266,8 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
   return (
     <SafeAreaView>
         <Button title="Back" onPress={() => navigation.goBack()}/>
+        {self && (
+            <View>
         <Text>Incoming requests</Text>
         <ScrollView>
             {pendingRequests
@@ -291,6 +295,8 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
                 </View>
             ))}
         </ScrollView>
+        </View>
+        )}
 
         <Text>All Friends</Text>
         <ScrollView>
@@ -308,6 +314,8 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
                     <Text style={{ fontWeight: 'bold' }}>{friend!.userName}</Text>
                     <Text style={{ color: '#666' }}>{friend!.name}</Text>
                 </TouchableOpacity>
+                {self && (
+                    <View>
                 {friend.status === 'active'? (
                         <TouchableOpacity onPress={() => unfriendUser(friend!.uid)}>
                         <Text style={{ color: 'red' }}>Unfriend</Text>
@@ -321,9 +329,14 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
                         <Text style={{ color: 'blue' }}>Friend</Text>
                         </TouchableOpacity>
                     )}
+                    </View>
+                )}
                 </View>
             ))}
         </ScrollView>
+
+        {self && (
+        <View>
         <Text>Search for a friend</Text>
         <TextInput
             value={searchUid}
@@ -339,7 +352,7 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
         <Button title="Search for friends" onPress={() => {handleSearchUid(searchUid)}}/>
         {!searchLoading ? (
             <View>
-            {searchUser ? (
+            {searchUser && (
                 <View key={searchUser.uid} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                     <TouchableOpacity onPress={() => onViewProfile(searchUser.uid)}>
                         <Image
@@ -365,11 +378,11 @@ export default function FriendsList({ navigation }: ProfileStackProps<'FriendsLi
                         </TouchableOpacity>
                     )}
                 </View>
-            ) : (
-                <Text></Text>
             )}
             </View>
         ): ( <ActivityIndicator size="large" color="#0000ff" /> )}
+        </View>
+        )}
     </SafeAreaView>
   );
 }

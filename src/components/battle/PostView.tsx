@@ -5,7 +5,6 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../../../firebaseConfig"; 
 import { Video } from "expo-av";
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from "../../context/AuthContext";
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,17 +34,18 @@ export default function PostView({
   type,
   interests,
   startIndex,
+  userId,
 } : { 
   battleId?: string,
   dare?: string,
   type?: string,
   interests?: Interests[],
   startIndex?: number,
+  userId: string,
 }) {
   const navigation = useNavigation();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const { user } = useAuth();
   const flatListRef = useRef<FlatList>(null); 
 
   useEffect(() => {
@@ -92,10 +92,10 @@ useEffect(() => {
     }
 
     const fetchSelectedGame = async () => {
-      if (!user || !battleId) return;
+      if (!userId || !battleId) return;
       try {
         console.log('Fetching selected game:', battleId);
-        const ref = collection(db, 'users', user.uid, 'pinned_games', battleId, 'submissions');
+        const ref = collection(db, 'users', userId, 'pinned_games', battleId, 'submissions');
   
         const q = query(ref, orderBy("submitted_at", "desc"));
         const snap = await getDocs(q);
