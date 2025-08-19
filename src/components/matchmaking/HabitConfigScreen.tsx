@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { View, SafeAreaView, TextInput, Button, 
   Text, Modal, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { useRoute, RouteProp } from '@react-navigation/native';
 import { db } from "../../../firebaseConfig";
 import { doc, getDoc, runTransaction, Timestamp } from "firebase/firestore";
 import Slider from '@react-native-community/slider';

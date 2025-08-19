@@ -83,11 +83,17 @@ export type ProfileStackParamList = {
   };
     FriendsList: undefined;
     Settings: undefined;
-    CropScreen: { imageUri: string; };
+    CropScreen: { imageUri: string; battle: PinnedBattle | null;  };
     AddInterests: undefined;
     EditInterest: { interestId: string; caption: string; imageUri: string[]; };
+    EditPin: {battle: PinnedBattle;};
 }
 
+type PinnedBattle = {
+  id: string;
+  title: string;
+  thumbnail: string;
+}
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> = 
   NativeStackScreenProps<RootStackParamList, T>;

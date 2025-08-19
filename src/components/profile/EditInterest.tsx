@@ -1,4 +1,5 @@
-import { View, Text, Button, SafeAreaView, Image, TextInput } from "react-native";
+import { View, Text, Button, SafeAreaView, Image, TextInput, 
+  ScrollView, StyleSheet } from "react-native";
 import { ProfileStackProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useAuth } from "../../context/AuthContext";
@@ -60,18 +61,21 @@ export default function EditInterestScreen({ navigation }: ProfileStackProps<'Ed
 
   return (
     <SafeAreaView>
+      <ScrollView horizontal={true}>
       {imageUri
         .map((image, index) => (
-        <View key={index}>
+        <View key={index} style={styles.imageContainer}>
             <Image
                 source={{ uri: image }}
-                style={{ width: 50, height: 50, marginRight: 10 }}
+                style={styles.image}
             />
             <Button title="delete" onPress={() => {
                 setImageUri((prevUris) => prevUris.filter((uri) => uri !== image));
             }} />
         </View>
-        ))}
+      ))}
+      </ScrollView>
+
     {imageUri.length < 5 ? (
         <Button
         title="Upload an Image"
@@ -100,3 +104,33 @@ export default function EditInterestScreen({ navigation }: ProfileStackProps<'Ed
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  scrollView: {
+    marginVertical: 10,
+  },
+  scrollContent: {
+    flexDirection: 'row', // Ensure children are laid out horizontally
+    alignItems: 'center',
+  },
+  imageContainer: {
+    marginRight: 10, // Space between images
+    alignItems: 'center',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginTop: 20,
+    borderRadius: 5,
+  },
+});

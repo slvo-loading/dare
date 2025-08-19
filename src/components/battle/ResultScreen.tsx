@@ -87,8 +87,8 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
         const pinnedGamesRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId);
         batch.set(pinnedGamesRef, {
           winner: battle.winner,
-          opponent_avatar: battle.avatarUrl,
-          dare: battle.users_dare,
+          thumbnail: battle.avatarUrl,
+          title: battle.users_dare,
           opponent_id: battle.opponentId,
         });
         console.log(step++);

@@ -185,7 +185,7 @@ export default function SubmitScreen({ navigation }: BattleStackProps<'SubmitScr
             <Image
             source={{ uri: item.uri }}
             contentFit="cover"
-            style={{ width: 300, aspectRatio: 1 }}
+            style={{ width: "100%",  aspectRatio: 1}}
           />
           ) : (
             <View style={{ width: 300, height: 300, overflow: 'hidden', marginLeft: 12 }}>

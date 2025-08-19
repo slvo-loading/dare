@@ -33,9 +33,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
   const [avatarUrl, setAvatarUrl] = useState(route.params.userProfile.avatarUrl);
   const [name, setName] = useState(route.params.userProfile.name);
   const [bio, setBio] = useState(route.params.userProfile.bio);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isViewingImage, setIsViewingImage] = useState(false);
-  const [imagePickerResult, setImagePickerResult] = useState<string | null>(null);
 
   const { user } = useAuth();
 
@@ -68,7 +66,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
   
     if (!result.canceled) {
       // TypeScript now knows that `result` is of type `ImagePickerSuccessResult`
-      navigation.navigate('CropScreen', { imageUri: result.assets[0].uri });
+      navigation.navigate('CropScreen', { imageUri: result.assets[0].uri, battle: null});
     }
   };
   
@@ -95,7 +93,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
               </Pressable>
             </View>
           </Modal>
-        <Button title="Upload Photo" onPress={pickImage}/>
+        <Button title="Edit Photo" onPress={pickImage}/>
 
         <TextInput
         value={userName}

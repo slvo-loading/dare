@@ -1,9 +1,11 @@
-import { SafeAreaView, View, Text, Button, ScrollView, TouchableOpacity, Image, Modal } from "react-native";
+import { SafeAreaView, View, Text, Button, ScrollView, 
+  TouchableOpacity, Image, Modal, StyleSheet } from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { use, useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../../firebaseConfig";
 import { useFocusEffect } from '@react-navigation/native';
+import PostView from '../battle/PostView';
 import { 
   collection, 
   query, 
@@ -29,6 +31,11 @@ type Battle =
   allowSubmission: boolean,
 }
 
+type Selected = {
+  id: string;
+  dare: string;
+}
+
 type Completed = 
 {
   battleId: string;
@@ -52,7 +59,8 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   const [archivedGames, setArchivedGames] = useState<Completed[]>([]);
   const [brokeModal, setBrokeModal] = useState(false);
   const [availableCoins, setAvailableCoins] = useState<number>(0);
-  const [acceptModal, setAcceptModal] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<Selected | null>(null);
+  const [showSubmissions, setShowSubmissions] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   // refetches everything everytime you change the screen ...hmmmm
@@ -539,12 +547,30 @@ const deleteRequest = async (battleId: string) => {
               <Text style={{ fontWeight: 'bold' }}>{battle.opponentName}</Text>
               <Text style={{ color: '#666' }}>{battle.opponentName}</Text>
           </TouchableOpacity>
-          <Text style={{ color: '#666', marginRight: 10 }}>{battle.users_dare}</Text>
-          <Text style={{ color: '#666', marginRight: 10 }}>coins bet: {battle.coins}</Text>
+          <View style={{flex: 1}}>
+            <Text style={{ color: '#666', }}>Dare: {battle.users_dare}</Text>
+            <Text style={{ color: '#666', }}>Coins: {battle.coins}</Text>
+          </View>
+          <Button title="View" onPress={() => {setSelectedGame({id: battle.battleId, dare: battle.users_dare}); setShowSubmissions(true)}}/>
           <Button title="Battle" disabled={battle.allowSubmission} onPress={() => navigation.navigate('ResponseScreen', {battleId: battle.battleId, dare: battle.users_dare})}/>
           </View>
       ))}
   </ScrollView>
+
+  <Modal
+    animationType="slide"
+    transparent={true}
+    visible={showSubmissions && selectedGame !== null}
+    onRequestClose={() => setShowSubmissions(false)}
+  >
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContainer}>
+        <Button title="X" onPress={() => setShowSubmissions(false)} />
+        <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.dare || ''} type={'pinned'}/>
+      </View>
+    </View>
+  </Modal>
+
   { archivedGames.length > 0 && (
     <View>
     <Text>Archived Games</Text>
@@ -591,3 +617,36 @@ const deleteRequest = async (battleId: string) => {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '80%',
+    height: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5, // For Android shadow
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+});

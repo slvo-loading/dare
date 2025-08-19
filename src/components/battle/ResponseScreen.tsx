@@ -1,5 +1,5 @@
 import { View, Text, Button, Dimensions, 
-  StyleSheet, Pressable,
+  StyleSheet, Pressable, SafeAreaView
 } from "react-native";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { BattleStackProps } from "../../types";
@@ -189,17 +189,17 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
 
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Button title="x" onPress={() => navigation.reset({
         index: 0,
         routes: [{ name: "BattleScreen" }],
       })}/>
       { showSubmissions ? (
-        <PostView battleId={battleId} onViewSubmissions={onViewSubmissions} dare={dare}/>
+        <PostView battleId={battleId} dare={dare} type={null}/>
       ) : (
         renderCamera()
       )}
-  </View>
+  </SafeAreaView>
   );
 }
 
@@ -212,9 +212,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   camera: {
+    flex: 1,
     width: "100%",
-    aspectRatio: 1,
-    height: undefined,
   },
   shutterContainer: {
     position: "absolute",

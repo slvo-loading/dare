@@ -6,6 +6,7 @@ import Settings from '../components/profile/Settings';
 import CropScreen from '../components/profile/CropScreen';
 import AddInterestScreen from '../components/profile/AddInterestScreen';
 import EditInterestScreen from '../components/profile/EditInterest';
+import EditPin from '../components/profile/EditPin';
 import { ProfileStackParamList } from '../types';
 
 
@@ -21,6 +22,7 @@ export default function ProfileStack() {
         <Stack.Screen name="Settings" component={Settings} />
         <Stack.Screen name="AddInterests" component={AddInterestScreen} />
         <Stack.Screen name="EditInterest" component={EditInterestScreen} />
+        <Stack.Screen name="EditPin" component={EditPin} />
     </Stack.Navigator>
   );
 }

@@ -1,10 +1,13 @@
-import { View, Text, Button, SafeAreaView, Image, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, Button, SafeAreaView, Image, 
+  TouchableOpacity, ActivityIndicator, ScrollView, Modal, Alert,
+StyleSheet } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProfileStackProps } from '../../types';
 import { db } from '../../../firebaseConfig';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import PostView from '../battle/PostView';
 
 import { 
   collection, 
@@ -17,6 +20,7 @@ import {
   setDoc, 
   serverTimestamp,
   updateDoc,
+  orderBy
 } from 'firebase/firestore';
 
 type User = {
@@ -25,8 +29,15 @@ type User = {
   name: string;
   bio: string;
   friendCount: number;
-  rank: string;
+  coins: number;
 };
+
+
+type Battle = {
+  id: string;
+  thumbnail: string;
+  title: string
+}
 
 type Interests = {
   id: string;
@@ -38,8 +49,10 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   const { logout, tempLogout, user } = useAuth();
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [interests, setInterests] = useState<Interests[]>([]);
-  const [pinnedGames, setPinnedGames] = useState<string[]>([]);
+  const [pinnedGames, setPinnedGames] = useState<Battle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGame, setSelectedGame] = useState<Battle | null>(null);
+  const [showSubmissions, setShowSubmissions] = useState<boolean>(false);
 
   const resetOnboarding = async () => {
     try {
@@ -94,7 +107,7 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
         name: userData.name,
         bio: userData.bio,
         friendCount: totalFriends,
-        rank: userData.rank
+        coins: userData.coins,
       });
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -133,19 +146,48 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   const fetchPinnedGames = async () => {
     if (!user) return;
     try {
-      const pinnedGamesRef = collection(db, 'users', user.uid, 'pinnedGames');
+      const pinnedGamesRef = collection(db, 'users', user.uid, 'pinned_games');
       const pinnedGamesSnap = await getDocs(pinnedGamesRef);
-      const games = pinnedGamesSnap.docs.map(doc => doc.data().gameId);
-      setPinnedGames(games);
+      let battle: Battle[] = [];
+      pinnedGamesSnap.forEach(doc => {
+        const data = doc.data();
+        battle.push({
+          id: doc.id,
+          thumbnail: data.thumbnail,
+          title: data.title
+        });
+      });
+
+      setPinnedGames(battle);
     } catch (error) {
       console.error('Error fetching pinned games:', error);
     }
   };
 
+  const deletePin = async (battleId: string) => {
+    if (!user) return;
+
+    try {
+      const pinnedGameRef = doc(db, 'users', user.uid, 'pinned_games', battleId);
+      await deleteDoc(pinnedGameRef);
+      setPinnedGames(prev => prev.filter(battle => battle.id !== battleId));
+    } catch (error) {
+      console.error('Error deleting pinned game:', error);
+    }
+  };
+
+  const deleteGameAlert = (battleId: string) =>
+    Alert.alert('Delete Pinned Game', 'This will permanently delete this pinned game.', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {text: 'Delete', onPress: () => deletePin(battleId)},
+    ]);
+
   return (
     <SafeAreaView>
     {loading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
-      <Text>👤 Profile Screen</Text>
       {userProfile ? (
         <View>
             <Image
@@ -155,46 +197,66 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
             <Text style={{ fontWeight: 'bold' }}>username: {userProfile.userName}</Text>
             <Text style={{ color: '#666' }}>name: {userProfile.name}</Text>
             <Text style={{ color: '#666' }}>bio: {userProfile.bio}</Text>
+            <Text style={{ color: '#666' }}>coins: {userProfile.coins}</Text>
             <Button title={`${userProfile.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList')}/>
 
-          <Button title="Add an interest" onPress={() => navigation.navigate('AddInterests')}/>
-          {interests.length > 0 ? (
-          <ScrollView>
-              {interests
-              .map((interest) => (
-                  <View key={interest.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                    <Button title="Delete" onPress={() => deleteInterest(interest.id)}/>
-                    <Button title="Edit" onPress={() => navigation.navigate('EditInterest', {interestId: interest.id, imageUri: interest.imageUri, caption: interest.caption})}/>
-                    {interest.imageUri
-                    .map((image, index) => (
+            {pinnedGames.length > 0 && (
+          <ScrollView horizontal={true} style={{ marginLeft: 10 }}>
+              {pinnedGames
+              .map((battle) => (
+                  <View key={battle.id} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 10 }}>
+                    <TouchableOpacity onPress={() => {setSelectedGame(battle); setShowSubmissions(true);}} style={{flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                       <Image
-                        key={index}
-                        source={{ uri: image }}
-                        style={{ width: 50, height: 50, marginRight: 10 }}
+                      source={{ uri: battle.thumbnail }}
+                      style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
                       />
-                    ))}
-                    <Text style={{ fontWeight: 'bold', marginRight: 10 }}>Description: {interest.caption}</Text>
+                      <Text>{battle.title}</Text>
+                    </TouchableOpacity>
+                    <Button title="Edit" onPress={() => navigation.navigate('EditPin', {battle: battle})}/>
+                    <Button title="Delete" onPress={() => deleteGameAlert(battle.id)}/>
                   </View>
               ))}
           </ScrollView>
-        ) : (
-          <Text>No interests found</Text>
         )}
 
-        <Button title="Edit Pinned Games"/>
-        {pinnedGames.length > 0 ? (
-          <ScrollView>
-              {pinnedGames
-              .map((game) => (
-                  <View key={game} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                    <Button title="Archive"/>
-                    <Text style={{ fontWeight: 'bold', marginRight: 10 }}>Id: {game}</Text>
-                  </View>
+
+          <Button title="Add a post" onPress={() => navigation.navigate('AddInterests')}/>
+          {interests.length > 0 && (
+          <ScrollView horizontal={true} style={{ marginLeft: 10 }}>
+              {interests
+              .map((interest) => (
+                <View key={interest.id} style={{ flexDirection: 'column', alignItems: 'center', marginBottom: 10, }}>
+                    {interest.imageUri
+                    .map((image, index) => (
+                      <View key={index} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 10 }}>
+                      <TouchableOpacity>
+                      <Image
+                        source={{ uri: image }}
+                        style={{ width: 150, aspectRatio: 1, marginRight: 10 }}
+                      />
+                      </TouchableOpacity>
+                      <Button title="Delete" onPress={() => deleteInterest(interest.id)}/>
+                      <Button title="Edit" onPress={() => navigation.navigate('EditInterest', {interestId: interest.id, imageUri: interest.imageUri, caption: interest.caption})}/>
+                      </View>
+                    ))}
+                </View>
               ))}
           </ScrollView>
-        ) : (
-          <Text>No pinned games found</Text>
         )}
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={showSubmissions && selectedGame !== null}
+            onRequestClose={() => setShowSubmissions(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Button title="X" onPress={() => setShowSubmissions(false)} />
+                <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.title || ''} type={'pinned'}/>
+              </View>
+            </View>
+          </Modal>
         </View>
       ) : (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -227,3 +289,37 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
     </SafeAreaView>
   );
 };
+
+
+const styles = StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent background
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContainer: {
+      width: '80%',
+      height: '80%',
+      backgroundColor: 'white',
+      borderRadius: 10,
+      padding: 20,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5, // For Android shadow
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    modalText: {
+      fontSize: 16,
+      color: '#333',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+  });

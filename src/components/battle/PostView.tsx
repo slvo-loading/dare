@@ -5,6 +5,7 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../../../firebaseConfig"; 
 import { Video } from "expo-av";
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from "../../context/AuthContext";
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,7 +13,6 @@ type Submission = {
     id: string;
     user_id: string;
     caption: string;
-    dare: string;
     media: Media[];
     submitted_at: string;
   }
@@ -23,23 +23,27 @@ type Media = {
   // muted: boolean;
 }
 
-
 export default function PostView({ 
   battleId, 
-  onViewSubmissions,
   dare,
+  type,
 } : { 
   battleId: string,
-  onViewSubmissions: (bool:boolean) => void
   dare: string,
+  type: string | null
 }) {
   const navigation = useNavigation();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { user } = useAuth();
 
   useFocusEffect(
   useCallback(() => {
+    if (!type) {
     fetchSubmissions();
+    } else {
+      fetchSelectedGame();
+    }
     setLoading(false);
   }, [battleId])
 );
@@ -60,13 +64,41 @@ useEffect(() => {
             id: doc.id,
             user_id: data.user_id,
             caption: data.caption,
-            dare: data.dare,
             media: data.media,
             submitted_at: data.submitted_at.toDate().toISOString()
             })
         });
   
         setSubmissions(submissionsData);
+    }
+
+    const fetchSelectedGame = async () => {
+      if (!user) return;
+      try {
+        console.log('Fetching selected game:', battleId);
+        const ref = collection(db, 'users', user.uid, 'pinned_games', battleId, 'submissions');
+        console.log("Firestore path:", `users/${user.uid}/pinned_games/${battleId}/submissions`);
+  
+        const q = query(ref, orderBy("submitted_at", "desc"));
+        const snap = await getDocs(q);
+  
+        const submissions: Submission[] = [];
+        snap.forEach(doc => {
+          const data = doc.data();
+          submissions.push({
+          id: doc.id,
+          user_id: data.user_id,
+          caption: data.caption,
+          media: data.media,
+          submitted_at: data.submitted_at.toDate().toISOString()
+          })
+      });
+  
+      setSubmissions(submissions);
+  
+      } catch (error) {
+        console.error('Error fetching selected game:', error);
+      }
     }
 
     const [horizontalIndex, setHorizontalIndex] = useState(0);
@@ -93,6 +125,8 @@ useEffect(() => {
     <SafeAreaView>
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 20 }} />
+      ) : submissions.length <= 0 ? (
+        <Text>No submissions yet.</Text>
       ) : (
         <FlatList
           data={submissions}
@@ -101,7 +135,7 @@ useEffect(() => {
           viewabilityConfig={viewabilityConfig}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index: vIndex }) => (
-            <View style={{marginBottom: 20, height: height - 150}}>
+            <View style={{marginBottom: 5,}}>
               <FlatList
               data={item.media}
               horizontal

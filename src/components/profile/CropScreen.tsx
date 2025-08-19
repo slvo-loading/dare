@@ -8,19 +8,9 @@ import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 
 import React from "react";
 
-type CropScreenRouteParams = {
-    imageUri: string;
-};
-  
-type CropScreenRouteProp = RouteProp<
-    { CropScreen: CropScreenRouteParams },
-    'CropScreen'
->;
 
-
-export default function CropScreen({ navigation }: ProfileStackProps<'CropScreen'>) {
-  const route = useRoute<CropScreenRouteProp>();
-  const { imageUri } = route.params;
+export default function CropScreen({ navigation, route }: ProfileStackProps<'CropScreen'>) {
+  const { imageUri, battle } = route.params;
   const { user } = useAuth();
 
   const handleSave = async () => {
@@ -32,10 +22,17 @@ export default function CropScreen({ navigation }: ProfileStackProps<'CropScreen
     try {
       const downloadUrl = await uploadMedia();
 
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        avatar_url: downloadUrl,
-    });
+      if (!battle) {
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+          avatar_url: downloadUrl,
+        });
+      } else {
+        const gameRef = doc(db, 'users', user.uid, 'pinned_games', battle.id);
+        await updateDoc(gameRef, {
+          thumbnail: downloadUrl,
+        });
+      }
 
       navigation.navigate('ProfileScreen');
     } catch (error) {
