@@ -4,7 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { addDoc, collection } from "firebase/firestore";
-import { db } from "../../../firebaseConfig";
+import { db, storage } from "../../../firebaseConfig";
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
+
 
 type Media = {
   type: string;
@@ -38,8 +40,9 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
   
       try {
         const interestsRef = collection(db, "users", user.uid, "interests");
+        const updatedMedia = await uploadAllMedia();
         const newInterest = {
-            image_url: imageUri,
+            image_url: updatedMedia,
             caption,
             created_at: new Date(),
           };
@@ -50,6 +53,34 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
       } catch (error) {
         console.error("Error updating profile:", error);
       }
+    }
+
+  async function uploadAllMedia() {
+      if (!user) return;
+      const uploadedMedia = await Promise.all(
+        imageUri.map(async (item, index) => {
+          // Convert URI to Blob
+          const response = await fetch(item.uri);
+          const blob = await response.blob();
+    
+          // Create a storage ref with unique name
+          const storageRef = ref(storage, `media/${Date.now()}_${index}`);
+    
+          // Upload Blob
+          await uploadBytes(storageRef, blob);
+    
+          // Get download URL
+          const downloadURL = await getDownloadURL(storageRef);
+    
+          // Return updated media object with new URL
+          return {
+            type: item.type,
+            uri: downloadURL,
+          };
+        })
+      );
+    
+      return uploadedMedia; // array with updated URLs
     }
 
   return (
@@ -79,7 +110,7 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
     <TextInput
     value={caption}
     onChangeText={setCaption}
-    placeholder="Describe your interest"
+    placeholder="Write a caption"
     style={{
         borderWidth: 1,
         borderColor: '#ccc',
