@@ -1,4 +1,4 @@
-import { View, SafeAreaView, Text, Button, ActivityIndicator} from "react-native";
+import { View, SafeAreaView, Text, Button, ActivityIndicator, Modal, StyleSheet} from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {io, Socket } from 'socket.io-client';
@@ -30,6 +30,7 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
   const [opponentAccepted, setOpponentAccepted] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const socket = useRef<Socket | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   const matchRef = useRef<MatchData | null>(null);
 
   useEffect(() => {
@@ -231,8 +232,26 @@ useFocusEffect(
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
             <Button title="Accept" onPress={acceptMatch} />
             <Button title="Decline" onPress={declineMatch} />
+            <Button title="Report" onPress={() => setShowReportModal(true)} />
           </View>
           )}
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={showReportModal}
+            onRequestClose={() => setShowReportModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Report Player</Text>
+                <Text style={styles.modalText}>Help us keep the community safe and enjoyable by reporting inappropriate behavior. False reports may result in penalties.</Text>
+                
+                <Button title="Close" onPress={() => setShowReportModal(false)} />
+              </View>
+            </View>
+          </Modal>
+
         </View>
       ) : (
         <>
@@ -243,3 +262,36 @@ useFocusEffect(
     </SafeAreaView>
   );
 }
+
+
+  const styles = StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContainer: {
+      width: '80%',
+      backgroundColor: 'white',
+      borderRadius: 10,
+      padding: 20,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5, // For Android shadow
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    modalText: {
+      fontSize: 16,
+      color: '#333',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+  });
