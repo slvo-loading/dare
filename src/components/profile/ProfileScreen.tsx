@@ -16,10 +16,7 @@ import {
   getDocs, 
   doc, 
   getDoc, 
-  deleteDoc, 
-  setDoc, 
-  serverTimestamp,
-  updateDoc,
+  deleteDoc,
   orderBy
 } from 'firebase/firestore';
 
@@ -42,7 +39,13 @@ type Battle = {
 type Interests = {
   id: string;
   caption: string;
-  imageUri: string[];
+  imageUrl: Media[];
+  createdAt: string;
+}
+
+type Media = {
+  type: string;
+  uri: string;
 }
 
 export default function ProfileScreen({ navigation }: ProfileStackProps<'ProfileScreen'>) {
@@ -53,6 +56,8 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   const [loading, setLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState<Battle | null>(null);
   const [showSubmissions, setShowSubmissions] = useState<boolean>(false);
+  const [type, setType] = useState<string>('');
+  const [index, setIndex] = useState<number>(0);
 
   const resetOnboarding = async () => {
     try {
@@ -117,13 +122,17 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   const fetchInterests = async () => {
     if (!user) return;
     try {
-      const interestsRef = collection(db, 'users', user.uid, 'interests');
+      const interestsRef = query(
+        collection(db, 'users', user.uid, 'interests'),
+        orderBy('created_at', 'desc')
+      );
       const interestsSnap = await getDocs(interestsRef);
       const interests = interestsSnap.docs
         .map(doc => ({ 
           id: doc.id,
           caption: doc.data().caption,
-          imageUri: doc.data().imageUri || []
+          imageUrl: doc.data().image_url,
+          createdAt: doc.data().created_at.toDate().toISOString()
         }));
 
       setInterests(interests);
@@ -185,6 +194,10 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
       {text: 'Delete', onPress: () => deletePin(battleId)},
     ]);
 
+  useEffect(() => {
+    console.log(interests);
+  }, [interests]);
+
   return (
     <SafeAreaView>
     {loading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
@@ -205,7 +218,7 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
               {pinnedGames
               .map((battle) => (
                   <View key={battle.id} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 10 }}>
-                    <TouchableOpacity onPress={() => {setSelectedGame(battle); setShowSubmissions(true);}} style={{flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+                    <TouchableOpacity onPress={() => {setSelectedGame(battle); setType('pinned'); setShowSubmissions(true);}} style={{flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                       <Image
                       source={{ uri: battle.thumbnail }}
                       style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
@@ -224,21 +237,18 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
           {interests.length > 0 && (
           <ScrollView horizontal={true} style={{ marginLeft: 10 }}>
               {interests
-              .map((interest) => (
+              .map((interest, index) => (
                 <View key={interest.id} style={{ flexDirection: 'column', alignItems: 'center', marginBottom: 10, }}>
-                    {interest.imageUri
-                    .map((image, index) => (
-                      <View key={index} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 10 }}>
-                      <TouchableOpacity>
-                      <Image
-                        source={{ uri: image }}
-                        style={{ width: 150, aspectRatio: 1, marginRight: 10 }}
-                      />
-                      </TouchableOpacity>
-                      <Button title="Delete" onPress={() => deleteInterest(interest.id)}/>
-                      <Button title="Edit" onPress={() => navigation.navigate('EditInterest', {interestId: interest.id, imageUri: interest.imageUri, caption: interest.caption})}/>
-                      </View>
-                    ))}
+                      <View style={{ flexDirection: 'column', alignItems: 'center', marginRight: 10 }}>
+                      <TouchableOpacity onPress={() => { setIndex(index); setType('interests'); setShowSubmissions(true);}}>
+                        <Image
+                          source={{ uri: interest.imageUrl?.[0].uri }}
+                          style={{ width: 150, aspectRatio: 1, marginRight: 10 }}
+                        />
+                        </TouchableOpacity>
+                        <Button title="Delete" onPress={() => deleteInterest(interest.id)}/>
+                        <Button title="Edit" onPress={() => navigation.navigate('EditInterest', {interestId: interest.id, caption: interest.caption, imageUrl: interest.imageUrl})}/>
+                        </View>
                 </View>
               ))}
           </ScrollView>
@@ -247,13 +257,17 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
           <Modal
             animationType="slide"
             transparent={true}
-            visible={showSubmissions && selectedGame !== null}
+            visible={showSubmissions}
             onRequestClose={() => setShowSubmissions(false)}
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
                 <Button title="X" onPress={() => setShowSubmissions(false)} />
-                <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.title || ''} type={'pinned'}/>
+                  {type === 'interests' ? (
+                    <PostView interests={interests} type={type} startIndex={index} />
+                  ) : (
+                    <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.title || ''} type={type}/>
+                  )}
               </View>
             </View>
           </Modal>

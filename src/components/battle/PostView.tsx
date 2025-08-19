@@ -11,10 +11,9 @@ const { width, height } = Dimensions.get('window');
 
 type Submission = {
     id: string;
-    user_id: string;
     caption: string;
     media: Media[];
-    submitted_at: string;
+    submitted_at?: string;
   }
 
 type Media = {
@@ -23,36 +22,55 @@ type Media = {
   // muted: boolean;
 }
 
+type Interests = {
+  id: string;
+  caption: string;
+  imageUrl: Media[];
+  createdAt: string;
+}
+
 export default function PostView({ 
   battleId, 
   dare,
   type,
+  interests,
+  startIndex,
 } : { 
-  battleId: string,
-  dare: string,
-  type: string | null
+  battleId?: string,
+  dare?: string,
+  type?: string,
+  interests?: Interests[],
+  startIndex?: number,
 }) {
   const navigation = useNavigation();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { user } = useAuth();
 
-  useFocusEffect(
-  useCallback(() => {
-    if (!type) {
-    fetchSubmissions();
-    } else {
+  useEffect(() => {
+    if (type === 'ongoing_game') {
+      fetchSubmissions();
+    } else if (type === 'pinned') {
       fetchSelectedGame();
+    } else if (type === 'interests') {
+      setSubmissions(
+        interests?.
+        map(interest => ({
+          id: interest.id,
+          caption: interest.caption,
+          media: interest.imageUrl,
+          submitted_at: interest.createdAt,
+        })) || [])
     }
     setLoading(false);
-  }, [battleId])
-);
+  }, [battleId]);
 
 useEffect(() => {
   console.log("Submissions fetched:", submissions);
 }, [submissions]);
 
   const fetchSubmissions = async () => {
+    if (!battleId) return;
         const submissionRef = collection(db, 'games', battleId, 'submissions');
         const q = query(submissionRef, orderBy("submitted_at", "desc"));
         const snapshot = await getDocs(q);
@@ -62,8 +80,8 @@ useEffect(() => {
             const data = doc.data();
             submissionsData.push({
             id: doc.id,
-            user_id: data.user_id,
             caption: data.caption,
+            // user_id: data.user_id,
             media: data.media,
             submitted_at: data.submitted_at.toDate().toISOString()
             })
@@ -73,11 +91,10 @@ useEffect(() => {
     }
 
     const fetchSelectedGame = async () => {
-      if (!user) return;
+      if (!user || !battleId) return;
       try {
         console.log('Fetching selected game:', battleId);
         const ref = collection(db, 'users', user.uid, 'pinned_games', battleId, 'submissions');
-        console.log("Firestore path:", `users/${user.uid}/pinned_games/${battleId}/submissions`);
   
         const q = query(ref, orderBy("submitted_at", "desc"));
         const snap = await getDocs(q);
@@ -87,7 +104,6 @@ useEffect(() => {
           const data = doc.data();
           submissions.push({
           id: doc.id,
-          user_id: data.user_id,
           caption: data.caption,
           media: data.media,
           submitted_at: data.submitted_at.toDate().toISOString()
@@ -133,6 +149,7 @@ useEffect(() => {
           pagingEnabled
           onViewableItemsChanged={onVerticalItemsChanged}
           viewabilityConfig={viewabilityConfig}
+          initialScrollIndex={startIndex || 0}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index: vIndex }) => (
             <View style={{marginBottom: 5,}}>

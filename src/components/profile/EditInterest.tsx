@@ -8,21 +8,9 @@ import React, { useState, useEffect } from "react";
 import * as ImagePicker from 'expo-image-picker';
 import { updateDoc, doc } from "firebase/firestore";
 
-type EditInterestRouteParams = {
-    interestId: string;
-    imageUri: string[];
-    caption: string;
-};
-  
-type EditInterestRouteProp = RouteProp<
-    { EditInterest: EditInterestRouteParams },
-    'EditInterest'
->;
-
-export default function EditInterestScreen({ navigation }: ProfileStackProps<'EditInterest'>) {
-    const route = useRoute<EditInterestRouteProp>();
+export default function EditInterestScreen({ navigation, route }: ProfileStackProps<'EditInterest'>) {
     const interestId = route.params.interestId;
-    const [imageUri, setImageUri] = useState(route.params.imageUri);
+    const [imageUri, setImageUri] = useState(route.params.imageUrl);
     const [caption, setCaption] = useState(route.params.caption);
     const { user } = useAuth();
 
@@ -35,7 +23,7 @@ export default function EditInterestScreen({ navigation }: ProfileStackProps<'Ed
       
         if (!result.canceled) {
           // TypeScript now knows that `result` is of type `ImagePickerSuccessResult`
-          setImageUri((prevUris) => [...prevUris, result.assets[0].uri]);
+          setImageUri((prevUris) => [...prevUris, {type: 'photo', uri: result.assets[0].uri}]);
         }
       };
 
@@ -66,7 +54,7 @@ export default function EditInterestScreen({ navigation }: ProfileStackProps<'Ed
         .map((image, index) => (
         <View key={index} style={styles.imageContainer}>
             <Image
-                source={{ uri: image }}
+                source={{ uri: image.uri }}
                 style={styles.image}
             />
             <Button title="delete" onPress={() => {

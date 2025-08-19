@@ -566,7 +566,7 @@ const deleteRequest = async (battleId: string) => {
     <View style={styles.modalOverlay}>
       <View style={styles.modalContainer}>
         <Button title="X" onPress={() => setShowSubmissions(false)} />
-        <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.dare || ''} type={'pinned'}/>
+        <PostView battleId={selectedGame?.id || ''} dare={selectedGame?.dare || ''} type={'ongoing_game'}/>
       </View>
     </View>
   </Modal>

@@ -8,7 +8,6 @@ import { CameraView, CameraType, useCameraPermissions, CameraMode } from 'expo-c
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import PostView from "./PostView";
 
 type ResponseRouteParams = {
     battleId: string;
@@ -119,12 +118,16 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
 
-  const onViewSubmissions = (bool: boolean) => {
-    setShowSubmissions(bool);
-  }
 
-  const renderCamera = () => {
-    return (
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Button title="x" onPress={() => navigation.reset({
+        index: 0,
+        routes: [{ name: "BattleScreen" }],
+      })}/>
+      
+
       <CameraView
         style={styles.camera}
         ref={ref}
@@ -141,9 +144,6 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
             ) : (
               <Feather name="video" size={32} color="white" />
             )}
-          </Pressable>
-          <Pressable onPress={() => onViewSubmissions(true)}>
-            <Text style={{ color: 'white' }}>Subs</Text>
           </Pressable>
           {newSubmission.length > 0 && (
           <Pressable onPress={() => 
@@ -183,22 +183,7 @@ export default function ResponseScreen({ navigation }: BattleStackProps<'Respons
           </Pressable>
         </View>
       </CameraView>
-    );
-  };
 
-
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <Button title="x" onPress={() => navigation.reset({
-        index: 0,
-        routes: [{ name: "BattleScreen" }],
-      })}/>
-      { showSubmissions ? (
-        <PostView battleId={battleId} dare={dare} type={null}/>
-      ) : (
-        renderCamera()
-      )}
   </SafeAreaView>
   );
 }

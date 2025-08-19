@@ -85,7 +85,7 @@ export type ProfileStackParamList = {
     Settings: undefined;
     CropScreen: { imageUri: string; battle: PinnedBattle | null;  };
     AddInterests: undefined;
-    EditInterest: { interestId: string; caption: string; imageUri: string[]; };
+    EditInterest: { interestId: string; caption: string; imageUrl: {type: string; uri: string}[]; };
     EditPin: {battle: PinnedBattle;};
 }
 

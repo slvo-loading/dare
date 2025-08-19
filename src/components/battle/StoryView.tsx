@@ -1,33 +1,38 @@
 import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView, View, Image, Pressable, StyleSheet, Dimensions, Text, ActivityIndicator, Button } from "react-native";
 import { useNavigation } from "@react-navigation/native"; // Import useNavigation
-
+import { useAuth } from "../../context/AuthContext";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "../../../firebaseConfig"; 
 
 const { width, height } = Dimensions.get("window");
 
 type Submission = {
     id: string,
-    caption: string;
-    dare: string;
-    media_url: string;
+    title: string;
+    media: Media[];
     submitted_at: string;
+  }
+
+  type Media = {
+    type: string;
+    uri: string;
+    // muted: boolean;
   }
 
 
 export default function StoryViewer({ 
   battleId, 
-  onViewSubmissions,
   dare,
-  submissions,
 } : { 
   battleId: string,
-  onViewSubmissions: (bool:boolean) => void
   dare: string,
-  submissions: Submission[]
 }) {
   const [index, setIndex] = useState<number>(0);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const navigation = useNavigation();
+  const { user } = useAuth();
 
   const nextStory = () => {
       setIndex((prev) => (prev + 1) % submissions.length);
@@ -68,20 +73,16 @@ export default function StoryViewer({
     <SafeAreaView>
       { submissions.length > 0 ? (
         <View style={styles.container}>
-          {dare !== "Waiting for dare" ? (
-            <Button title="x" onPress={() => onViewSubmissions(false)} />
-          ) : (
-            <Button title="Back" onPress={() => navigation.goBack()} />
-          )}
+          <Button title="Back" onPress={() => navigation.goBack()} />
           <Pressable style={styles.pressable} onPress={handlePress}>
             {submissions.length > 0 ? (
               <>
-                <Image
-                  source={{ uri: submissions[index]?.media_url }}
+                {/* <Image
+                  source={{ uri: submissions[index]?.media }}
                   style={styles.image}
-                />
-                <Text>Caption: {submissions[index]?.caption}</Text>
-                <Text>Dare: {submissions[index]?.dare}</Text>
+                /> */}
+                {/* <Text>Caption: {submissions[index]?.caption}</Text>
+                <Text>Dare: {submissions[index]?.dare}</Text> */}
                 <Text>
                   Submitted at:{" "}
                   {new Date(submissions[index]?.submitted_at).toLocaleString()}

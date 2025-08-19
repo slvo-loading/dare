@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Button, SafeAreaView } from "react-native";
+import { View, Text, Button, SafeAreaView, Alert } from "react-native";
 import { BattleStackProps } from "../../types";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -16,7 +16,8 @@ import {
     serverTimestamp,
     updateDoc,
     writeBatch,
-    runTransaction
+    runTransaction,
+    orderBy
   } from 'firebase/firestore';
 
 type Completed = 
@@ -63,27 +64,45 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
           player2_status: status
         })
       }
+
+      claimCoins();
     }
     
     const handlePin = async () => {
       let step = 0;
       if (!user) return;
-      console.log(step++);//0
-      handleStatus('pinned');
-      console.log(step++);//1
 
       try {
         const batch = writeBatch(db);
         console.log(step++);//2
         const q = query(
           collection(db, 'games', battle.battleId, 'submissions'),
-          where('user_id', '==', user.uid)
+          where('user_id', '==', user.uid),
+          orderBy('submitted_at', 'desc')
         );
-        console.log(step++);//3
       
         const submissionsSnap = await getDocs(q);
-        console.log(step++);//4
+        if (submissionsSnap.empty) {
+          unableToPin();
+          return;
+        }
+        
+        let thumbnail: string | null = null;
       
+        submissionsSnap.forEach(sub => {
+          const pinnedSubRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId, 'submissions', sub.id);
+          if (!thumbnail) {
+            thumbnail = sub.data().media[0]?.uri;
+          }
+          const subData = sub.data();
+          batch.set(pinnedSubRef, {
+            caption: subData.caption,
+            media: subData.media,
+            submitted_at: subData.submitted_at,
+          }
+          );
+        });
+
         const pinnedGamesRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId);
         batch.set(pinnedGamesRef, {
           winner: battle.winner,
@@ -91,21 +110,38 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
           title: battle.users_dare,
           opponent_id: battle.opponentId,
         });
-        console.log(step++);
-      
-        submissionsSnap.forEach(sub => {
-          const pinnedSubRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId, 'submissions', sub.id);
-          batch.set(pinnedSubRef, sub.data());
-        });
-        console.log(step++);
-      
+
+        handleStatus('pinned');
         await batch.commit();
-        console.log(step++);
 
       } catch (error) {
         console.error("Error pinning game:", error);
       }
     }
+
+    const unableToPin = () =>
+      Alert.alert('Unable to Pin', 'You didn\'t submit any photos for this game. Please delete or archive the game instead.', [
+        {
+          text: 'Delete',
+          onPress: () => {
+            handleStatus('deleted');
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "BattleScreen" }],
+              });
+          }
+        },
+        {
+          text: 'Archive', 
+          onPress: () => {
+            handleStatus('archived');
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "BattleScreen" }],
+              });
+            }
+        },
+      ]);
 
     const claimCoins = async () => {
         if (!user) return;
@@ -149,7 +185,6 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
         )}
         <Button title="Delete" onPress={() => {
             handleStatus('deleted');
-            claimCoins();
             navigation.reset({
                 index: 0,
                 routes: [{ name: "BattleScreen" }],
@@ -157,7 +192,6 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
         }}/>
         <Button title="Archive" onPress={() => {
             handleStatus('archived');
-            claimCoins();
             navigation.reset({
                 index: 0,
                 routes: [{ name: "BattleScreen" }],
@@ -165,7 +199,6 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
         }}/>
         <Button title="Pin to Profile" onPress={() => {
             handlePin();
-            claimCoins();
             navigation.reset({
                 index: 0,
                 routes: [{ name: "BattleScreen" }],

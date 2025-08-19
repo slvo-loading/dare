@@ -6,9 +6,13 @@ import { useAuth } from "../../context/AuthContext";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../../firebaseConfig";
 
+type Media = {
+  type: string;
+  uri: string;
+}
 
 export default function AddInterestScreen({ navigation }: ProfileStackProps<'AddInterests'>) {
-    const[imageUri, setImageUri] = useState<string[]>([]);
+    const[imageUri, setImageUri] = useState<Media[]>([]);
     const [caption, setCaption] = useState<string>('');
     const { user } = useAuth();
 
@@ -22,7 +26,7 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
   
     if (!result.canceled) {
       // TypeScript now knows that `result` is of type `ImagePickerSuccessResult`
-      setImageUri((prevUris) => [...prevUris, result.assets[0].uri]);
+      setImageUri((prevUris) => [...prevUris, {type: 'photo', uri: result.assets[0].uri} ]);
     }
   };
 
@@ -35,9 +39,9 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
       try {
         const interestsRef = collection(db, "users", user.uid, "interests");
         const newInterest = {
-            imageUri,
+            image_url: imageUri,
             caption,
-            createdAt: new Date(),
+            created_at: new Date(),
           };
         
         const docRef = await addDoc(interestsRef, newInterest);
@@ -56,8 +60,8 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
         {imageUri
         .map((uri) => (
             <Image
-            key={uri}
-            source={{ uri: uri }}
+            key={uri.uri}
+            source={{ uri: uri.uri }}
             style={{ width: 200, height: 200, marginRight: 10 }}
             />
         ))}
