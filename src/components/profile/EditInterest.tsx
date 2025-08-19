@@ -49,7 +49,7 @@ export default function EditInterestScreen({ navigation, route }: ProfileStackPr
 
   return (
     <SafeAreaView>
-      <ScrollView horizontal={true}>
+      <ScrollView>
       {imageUri
         .map((image, index) => (
         <View key={index} style={styles.imageContainer}>
@@ -62,7 +62,6 @@ export default function EditInterestScreen({ navigation, route }: ProfileStackPr
             }} />
         </View>
       ))}
-      </ScrollView>
 
     {imageUri.length < 5 ? (
         <Button
@@ -89,6 +88,7 @@ export default function EditInterestScreen({ navigation, route }: ProfileStackPr
         title="Save Changes"
         onPress={handleSave}
       />
+      </ScrollView>
     </SafeAreaView>
   );
 }

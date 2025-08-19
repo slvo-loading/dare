@@ -46,6 +46,7 @@ export default function PostView({
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { user } = useAuth();
+  const flatListRef = useRef<FlatList>(null); 
 
   useEffect(() => {
     if (type === 'ongoing_game') {
@@ -189,7 +190,16 @@ useEffect(() => {
               />
               <Text>{item.caption}</Text>
             </View>
-          )}/>
+          )}
+          getItemLayout={(data, index) => ({
+            length: width, // Height of each item
+            offset: width * index, // Offset = height * index
+            index,
+          })}
+          ref={(ref) => {
+            flatListRef.current = ref;
+          }}
+          />
       )}
     </SafeAreaView>
   )

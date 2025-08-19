@@ -146,7 +146,7 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
     try {
       const interestRef = doc(db, 'users', user.uid, 'interests', interestId);
       await deleteDoc(interestRef);
-      fetchInterests();
+      setInterests(prev => prev.filter(interest => interest.id !== interestId));
     } catch (error) {
       console.error('Error deleting interest:', error);
     }
@@ -194,9 +194,14 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
       {text: 'Delete', onPress: () => deletePin(battleId)},
     ]);
 
-  useEffect(() => {
-    console.log(interests);
-  }, [interests]);
+    const deleteInterestAlert = (interestId: string) =>
+      Alert.alert('Delete Post', 'This will permanently delete this post.', [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {text: 'Delete', onPress: () => deleteInterest(interestId)},
+      ]);
 
   return (
     <SafeAreaView>
@@ -246,8 +251,8 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
                           style={{ width: 150, aspectRatio: 1, marginRight: 10 }}
                         />
                         </TouchableOpacity>
-                        <Button title="Delete" onPress={() => deleteInterest(interest.id)}/>
-                        <Button title="Edit" onPress={() => navigation.navigate('EditInterest', {interestId: interest.id, caption: interest.caption, imageUrl: interest.imageUrl})}/>
+                          <Button title="Edit" onPress={() => navigation.navigate('EditInterest', {interestId: interest.id, caption: interest.caption, imageUrl: interest.imageUrl})}/>
+                          <Button title="Delete" onPress={() => deleteInterestAlert(interest.id)}/>
                         </View>
                 </View>
               ))}

@@ -1,4 +1,4 @@
-import { View, Text, Button, SafeAreaView, Image, TextInput} from "react-native";
+import { View, Text, Button, SafeAreaView, Image, TextInput, ScrollView} from "react-native";
 import { ProfileStackProps } from "../../types";
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect } from "react";
@@ -56,7 +56,7 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
     <SafeAreaView>
       <Text>Add an interest</Text>
       {imageUri.length > 0 ? (
-        <View>
+        <ScrollView horizontal={true}>
         {imageUri
         .map((uri) => (
             <Image
@@ -65,7 +65,7 @@ export default function AddInterestScreen({ navigation }: ProfileStackProps<'Add
             style={{ width: 200, height: 200, marginRight: 10 }}
             />
         ))}
-      </View>
+      </ScrollView>
       ) : (
       null
     )}
