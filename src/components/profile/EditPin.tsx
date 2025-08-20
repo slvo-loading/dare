@@ -34,9 +34,9 @@ export default function EditPin({ navigation, route }: ProfileStackProps<'EditPi
         }
     
         try {
-          const userRef = doc(db, 'users', user.uid);
+          const userRef = doc(db, 'users', user.uid, 'pinned_games', battle.id);
           await updateDoc(userRef, {
-            dare: title,
+            title: title,
         });
     
           navigation.goBack();
@@ -88,7 +88,7 @@ return (
             onPress={() => navigation.goBack()}
             />
           <Button
-            title="Save Changes"
+            title="Save"
             onPress={handleSave}
           />
         </SafeAreaView>

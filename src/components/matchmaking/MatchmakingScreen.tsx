@@ -1,4 +1,4 @@
-import { View, SafeAreaView, Text, Button, ActivityIndicator, Modal, StyleSheet} from "react-native";
+import { View, SafeAreaView, Text, Button, ActivityIndicator, Modal, StyleSheet, TextInput} from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {io, Socket } from 'socket.io-client';
@@ -6,6 +6,7 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { collection, doc, addDoc, Timestamp, runTransaction } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
+import { Dropdown } from "react-native-element-dropdown";
 
 type MatchData = {
   opponentName: string;
@@ -20,6 +21,14 @@ type MatchmakingScreenRouteProp = RouteProp<
   'Matchmaking'
 >;
 
+const reportReasons = [
+  { label: "Cheating / Exploiting", value: "cheating" },
+  { label: "Harassment / Abusive Language", value: "harassment" },
+  { label: "Inappropriate Profile / Content", value: "inappropriate" },
+  { label: "AFK / Intentionally Losing", value: "afk" },
+  { label: "Other", value: "other" },
+];
+
 export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matchmaking'>) {
   const route = useRoute<MatchmakingScreenRouteProp>();
   const [dare, setDare] = useState(route.params.dare); 
@@ -29,6 +38,8 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
   const [countdown, setCountdown] = useState(30); // Example countdown duration
   const [opponentAccepted, setOpponentAccepted] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [selectedReason, setSelectedReason] = useState(null);
+  const [details, setDetails] = useState("");
   const socket = useRef<Socket | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const matchRef = useRef<MatchData | null>(null);
@@ -164,6 +175,14 @@ useFocusEffect(
     }
   };
 
+  const reportUser = async () => {
+    if (socket.current) {
+      socket.current.emit('reported');
+    }
+
+    
+  }
+
   const createGame = async ({ player1Id, player2Id, dareFromPlayer1, dareFromPlayer2, player1Coins, player2Coins} 
     : {player1Id:string, player2Id: string, dareFromPlayer1: string, dareFromPlayer2: string, 
       player1Coins: number, player2Coins: number}) => {
@@ -247,7 +266,26 @@ useFocusEffect(
                 <Text style={styles.modalTitle}>Report Player</Text>
                 <Text style={styles.modalText}>Help us keep the community safe and enjoyable by reporting inappropriate behavior. False reports may result in penalties.</Text>
                 
-                <Button title="Close" onPress={() => setShowReportModal(false)} />
+                <Dropdown
+                  style={styles.dropdown}
+                  data={reportReasons}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select a reason"
+                  value={selectedReason}
+                  onChange={(item) => setSelectedReason(item.value)}
+                />
+
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Additional details (optional)..."
+                  value={details}
+                  onChangeText={setDetails}
+                  multiline
+                />
+
+                <Button title="Cancel" onPress={() => setShowReportModal(false)} />
+                <Button title="Submit Report" onPress={reportUser}/>
               </View>
             </View>
           </Modal>
@@ -294,4 +332,22 @@ useFocusEffect(
       marginBottom: 8,
       textAlign: 'center',
     },
+    dropdown: {
+      height: 50,
+      borderColor: "#ccc",
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      marginBottom: 15,
+    },
+    textInput: {
+      height: 80,
+      borderColor: "#ccc",
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 10,
+      marginBottom: 15,
+      textAlignVertical: "top",
+    },
+  
   });

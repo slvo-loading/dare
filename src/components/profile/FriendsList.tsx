@@ -170,7 +170,16 @@ export default function FriendsList({ navigation, route }: ProfileStackProps<'Fr
         const ref = doc(db, 'friends', id);
         await deleteDoc(ref);
 
-        fetchPendingRequests();
+        setPendingRequests((prev) =>
+            prev.filter((friend) => friend && friend.uid !== friendId)
+        );
+        setFriendsList((prev) =>
+            prev.filter((friend) => friend && friend.uid !== friendId)
+        );
+
+        if(searchUser && searchUser.uid === friendId) {
+            setSearchUser((prev) => prev ? { ...prev, status: "none" } : null);
+        }
     };
 
     //sends a friend request
@@ -194,6 +203,10 @@ export default function FriendsList({ navigation, route }: ProfileStackProps<'Fr
               friend && friend.uid === friendId ? { ...friend, status: "pending" } : friend
             )
         );
+
+        if(searchUser && searchUser.uid === friendId) {
+            setSearchUser((prev) => prev ? { ...prev, status: "pending" } : null);
+        }
     }
 
     const acceptRequest = async (friendId: string) => {
@@ -226,6 +239,8 @@ export default function FriendsList({ navigation, route }: ProfileStackProps<'Fr
             console.log("User not authenticated.");
             return;
         }
+
+        setSearchUser(null);
         
         if(!enteredUid.trim()) {
             console.log("Please enter a valid UID.");

@@ -1,6 +1,6 @@
 // src/screens/auth/LoginScreen.tsx
 import React, {useRef, useState} from 'react';
-import { View, Text, Button, TextInput } from 'react-native';
+import { View, Text, Button, TextInput, SafeAreaView } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { auth, app } from "../../../firebaseConfig";
 import { PhoneAuthProvider, signInWithCredential, signInWithPhoneNumber } from 'firebase/auth';
@@ -64,8 +64,9 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={{ padding: 20 }}>
-
+    <SafeAreaView style={{ padding: 20 }}>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Login</Text>
+{/* 
       <Text>Enter phone number:</Text>
       <TextInput
         style={{ marginVertical: 10, fontSize: 17, borderBottomWidth: 1 }}
@@ -77,8 +78,8 @@ export default function LoginScreen() {
         value={phoneNumber}
       />
 
-      <Button title="Send Code" onPress={sendVerification} />
-
+      <Button title="Send Code" onPress={sendVerification} /> */}
+{/* 
       {verificationId ? (
         <>
           <Text>Enter verification code:</Text>
@@ -94,9 +95,9 @@ export default function LoginScreen() {
         </>
       ) : null}
 
-      <Text style={{ marginTop: 20 }}>{message}</Text>
-      <AppleSignInButton />
-      <GoogleSignInButton/>
+      <Text style={{ marginTop: 20 }}>{message}</Text> */}
+      {/* <AppleSignInButton />
+      <GoogleSignInButton/> */}
       <TextInput
         value={uid}
         onChangeText={setUid}
@@ -108,7 +109,7 @@ export default function LoginScreen() {
           marginBottom: 12,
         }}
       />
-        <TextInput
+        {/* <TextInput
         value={userName}
         onChangeText={setUserName}
         placeholder="Enter your username"
@@ -118,13 +119,13 @@ export default function LoginScreen() {
           padding: 12,
           marginBottom: 12,
         }}
-      />
+      /> */}
       <Button
-        title="Temporary Login"
+        title="Login"
         onPress={() => {
           tempLogin({uid: uid, userName: userName});
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 }

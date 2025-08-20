@@ -1,5 +1,5 @@
 import { SafeAreaView, View, Text, Button, ScrollView, 
-  TouchableOpacity, Image, Modal, StyleSheet } from "react-native";
+  TouchableOpacity, Image, Modal, StyleSheet, Alert } from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { use, useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -441,10 +441,19 @@ const deleteRequest = async (battleId: string) => {
   });
   }
 
+  const declineGameAlert = (battleId: string, opponentId: string) =>
+    Alert.alert('Decline Request', `Are you sure you want to decline?`, [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {text: 'Decline', onPress: () => declineRequest(battleId, opponentId)},
+    ]);
+
   return (
     <SafeAreaView>
       <Button 
-      title="New Battle"
+      title="New Game"
       onPress={newBattle}/>
       { pendingOutRequests.length > 0 && (
         <View>
@@ -498,7 +507,7 @@ const deleteRequest = async (battleId: string) => {
                   <TouchableOpacity onPress={() => viewRequest(battle)}>
                       <Text style={{ color: 'blue' }}>Accept</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => declineRequest(battle.battleId, battle.opponentId)}>
+                  <TouchableOpacity onPress={() => declineGameAlert(battle.battleId, battle.opponentId)}>
                       <Text style={{ color: 'red' }}>Decline</Text>
                   </TouchableOpacity>
                 </View>
@@ -531,7 +540,7 @@ const deleteRequest = async (battleId: string) => {
         </ScrollView>
       </View>
     )}
-    <Text>Dares</Text>
+    <Text>Ongoing Games</Text>
     <ScrollView>
       {battleList
       .filter((battle) => battle !== null)
@@ -552,7 +561,7 @@ const deleteRequest = async (battleId: string) => {
             <Text style={{ color: '#666', }}>Coins: {battle.coins}</Text>
           </View>
           <Button title="View" onPress={() => {setSelectedGame({id: battle.battleId, dare: battle.users_dare}); setShowSubmissions(true)}}/>
-          <Button title="Battle" disabled={battle.allowSubmission} onPress={() => navigation.navigate('ResponseScreen', {battleId: battle.battleId, dare: battle.users_dare})}/>
+          <Button title="Play" disabled={battle.allowSubmission} onPress={() => navigation.navigate('ResponseScreen', {battleId: battle.battleId, dare: battle.users_dare})}/>
           </View>
       ))}
   </ScrollView>

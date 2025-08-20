@@ -142,11 +142,12 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
         />
 
         <Text></Text>
-        <Text>You have {availableCoins} coins. How much will you bet? bet coins: {betCoins}</Text>
+        <Text>You have {availableCoins} coins. How much will you bet?</Text>
+        <Text>bet coins: {betCoins}</Text>
         <Slider
           minimumValue={1}
           maximumValue={availableCoins}
-          step={1}
+          step={10}
           value={betCoins}
           onValueChange={setBetCoins}
         />

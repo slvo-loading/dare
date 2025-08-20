@@ -95,6 +95,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
           </Modal>
         <Button title="Edit Photo" onPress={pickImage}/>
 
+      <Text>Username</Text>
         <TextInput
         value={userName}
         onChangeText={setUserName}
@@ -107,6 +108,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
         }}
       />
 
+      <Text>Name</Text>
       <TextInput
         value={name}
         onChangeText={setName}
@@ -119,6 +121,7 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
         }}
       />
 
+      <Text>Bio</Text>
       <TextInput
         value={bio}
         onChangeText={setBio}
