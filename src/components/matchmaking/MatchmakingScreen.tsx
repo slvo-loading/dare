@@ -1,4 +1,4 @@
-import { View, SafeAreaView, Text, Button, ActivityIndicator, Modal, StyleSheet, TextInput} from "react-native";
+import { View, SafeAreaView, Text, Button, ActivityIndicator, Modal, StyleSheet, TextInput, Alert} from "react-native";
 import { BattleStackProps } from "../../types";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {io, Socket } from 'socket.io-client';
@@ -7,6 +7,7 @@ import { collection, doc, addDoc, Timestamp, runTransaction } from 'firebase/fir
 import { db } from '../../../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
 import { Dropdown } from "react-native-element-dropdown";
+import Slider from '@react-native-community/slider';
 
 type MatchData = {
   opponentName: string;
@@ -35,14 +36,17 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
 
   const [status, setStatus] = useState('Looking for match...');
   const [match, setMatch] = useState<MatchData | null>(null);
-  const [countdown, setCountdown] = useState(30); // Example countdown duration
-  const [opponentAccepted, setOpponentAccepted] = useState(false);
-  const [accepted, setAccepted] = useState(false);
-  const [selectedReason, setSelectedReason] = useState(null);
-  const [details, setDetails] = useState("");
+  const [countdown, setCountdown] = useState<number>(60); // Example countdown duration
+  const [opponentAccepted, setOpponentAccepted] = useState<boolean>(false);
+  const [accepted, setAccepted] = useState<boolean>(false);
+  const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const [details, setDetails] = useState<string>("");
   const socket = useRef<Socket | null>(null);
-  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const matchRef = useRef<MatchData | null>(null);
+  const [reportedUser, setReportedUser] = useState<boolean>(false);
+  const opponentReportedRef = useRef(false);
+  const [severity, setSeverity] = useState<number>(1); 
 
   useEffect(() => {
     matchRef.current = match;
@@ -51,7 +55,10 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
 
 useFocusEffect(
   useCallback(() => {
-    socket.current = io('http://localhost:3001');
+    
+    socket.current = io("http://192.168.1.163:4000", {
+      transports: ["websocket"], // Force WebSocket to avoid polling issues
+    });
     const socketClient = socket.current;
     socketClient.emit('enqueue', { dare });
   
@@ -59,7 +66,7 @@ useFocusEffect(
     socketClient.on('match_found', (response) => {
       
       setMatch(response.data);
-      setCountdown(10);
+      setCountdown(60);
       setStatus('Match found!');
     });
   
@@ -68,8 +75,15 @@ useFocusEffect(
     });
   
     socketClient.on('requeue', () => {
+      if (opponentReportedRef.current) {
+        console.log("opponenet reported you, can't requeue");
+        return;
+      }
+
       console.log('Requeueing...');
       socketClient.emit('enqueue', { dare });
+      opponentReportedRef.current = false;
+      setReportedUser(false);
       setOpponentAccepted(false);
       setMatch(null);
       setStatus('Looking for match...');
@@ -81,6 +95,11 @@ useFocusEffect(
     socketClient.on('opponent_accepted', () => {
       console.log('Opponent accepted the match');
       setOpponentAccepted(true);
+    });
+
+    socketClient.on('opponent_reported', () => {
+      console.log('Opponent reported you');
+      opponentReportedRef.current = true;
     });
 
     socketClient.on('opponent_declined', () => {
@@ -151,15 +170,38 @@ useFocusEffect(
         setCountdown((prev) => {
           if (prev <= 1 || (accepted && opponentAccepted)) {
             clearInterval(timer);
-            if (socket.current && !accepted) socket.current.emit('match_timeout');
+            if (socket.current && !accepted && !opponentReportedRef.current) {
+              console.log("user did not accept match, and was not reported, requeuing");
+              socket.current.emit('match_timeout')
+            } else if (opponentReportedRef.current) {
+              console.log("opponent reported you, handling reported user");
+              handleReportedUser();
+            }
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+      setShowReportModal(false);
       return () => clearInterval(timer);
     }
   }, [match, accepted, opponentAccepted]);
+
+  const handleReportedUser = () => {
+    console.log("Handling reported user");
+    if (socket.current) {
+      socket.current.disconnect(); // Explicitly disconnect the user from the socket
+    }
+    Alert.alert(
+      'You have been reported',
+      'Details about the report can be found in your Settings under Reports.',
+      [{ text: 'OK', onPress: () => navigation.reset({
+          index: 0,
+          routes: [{ name: "BattleScreen" }],
+        })
+      }]
+    );
+  } 
   
 
   const acceptMatch = () => {
@@ -176,12 +218,50 @@ useFocusEffect(
   };
 
   const reportUser = async () => {
-    if (socket.current) {
-      socket.current.emit('reported');
-    }
+    console.log("submitting report")
+    if(!match) return;
 
-    
-  }
+    try {
+      // 1️⃣ Save report to Firebase
+      console.log("Saving report to Firebase");
+      const ref = collection(db, 'reports');
+      await addDoc(ref, {
+        reporter_id: dare.userId,
+        reported_id: match.opponentId,
+        reason: selectedReason,
+        details: details || '',
+        severity: severity,
+        timestamp: Timestamp.now(),
+        status: 'pending',
+      })
+
+      console.log("Report saved successfully");
+  
+      // 2️⃣ Emit to the other player via Socket.IO
+      if (socket.current) {
+        socket.current.emit('reported');
+      }
+
+      console.log("Report emitted to socket");
+  
+      // 3️⃣ Show success alert
+      Alert.alert(
+        'Quick report submitted!',
+        'You can provide additional details anytime on the Reports page in your Settings. You will be requeued when the countdown ends.',
+        [{ text: 'Close', style: 'default', onPress: () => setShowReportModal(false) }]
+      );
+  
+      // Reset modal fields
+      setReportedUser(true);
+      setSelectedReason(null);
+      setDetails('');
+  
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
+  };
+  
 
   const createGame = async ({ player1Id, player2Id, dareFromPlayer1, dareFromPlayer2, player1Coins, player2Coins} 
     : {player1Id:string, player2Id: string, dareFromPlayer1: string, dareFromPlayer2: string, 
@@ -244,6 +324,7 @@ useFocusEffect(
           <Text style={{ marginBottom: 20 }}>
             Opponent Accepted?: {opponentAccepted ? 'Yes' : 'No'}
           </Text>
+          <Text>Reported by other user?{opponentReportedRef.current ? 'Yes' : 'No'}</Text>
           { accepted ? (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
             </View>
@@ -251,7 +332,7 @@ useFocusEffect(
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
             <Button title="Accept" onPress={acceptMatch} />
             <Button title="Decline" onPress={declineMatch} />
-            <Button title="Report" onPress={() => setShowReportModal(true)} />
+            <Button title="Report" disabled={reportedUser} onPress={() => {setShowReportModal(true); console.log("opened modal")}} />
           </View>
           )}
 
@@ -263,9 +344,11 @@ useFocusEffect(
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Report Player</Text>
+                <Text style={styles.modalTitle}>Quick Report</Text>
                 <Text style={styles.modalText}>Help us keep the community safe and enjoyable by reporting inappropriate behavior. False reports may result in penalties.</Text>
-                
+
+                <Text style={styles.modalText}>You have {countdown} seconds before the match requeues.</Text>
+
                 <Dropdown
                   style={styles.dropdown}
                   data={reportReasons}
@@ -276,13 +359,24 @@ useFocusEffect(
                   onChange={(item) => setSelectedReason(item.value)}
                 />
 
+                <Text style={styles.modalText}>Severity: {severity} </Text>
+                <Slider
+                  minimumValue={1}
+                  maximumValue={5}
+                  step={1}
+                  value={severity}
+                  onValueChange={setSeverity}
+                />
+
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Additional details (optional)..."
+                  placeholder="Additional details (optional)"
+                  multiline
+                  maxLength={300}
                   value={details}
                   onChangeText={setDetails}
-                  multiline
                 />
+                <Text style={styles.modalText}>{details.length}/300</Text>
 
                 <Button title="Cancel" onPress={() => setShowReportModal(false)} />
                 <Button title="Submit Report" onPress={reportUser}/>
@@ -334,11 +428,13 @@ useFocusEffect(
     },
     dropdown: {
       height: 50,
+      width: '100%', // Set the dropdown to take the full width of its parent
+      maxWidth: 300, // Optional: Set a maximum width for the dropdown
       borderColor: "#ccc",
       borderWidth: 1,
       borderRadius: 8,
-      paddingHorizontal: 12,
       marginBottom: 15,
+      alignSelf: "center", // Center the dropdown within its parent
     },
     textInput: {
       height: 80,

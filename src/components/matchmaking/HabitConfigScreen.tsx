@@ -12,7 +12,7 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
   const { type, battle } = route.params;
   const [dare, setDare] = useState<string>('');
   const { user } = useAuth();
-  const [betCoins, setBetCoins] = useState<number>(1);
+  const [betCoins, setBetCoins] = useState<number>(0.25);
   const [availableCoins, setAvailableCoins] = useState<number>(0);
   const [showModal, setShowModal] = useState<boolean>(true);
 
@@ -143,11 +143,11 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
 
         <Text></Text>
         <Text>You have {availableCoins} coins. How much will you bet?</Text>
-        <Text>bet coins: {betCoins}</Text>
+        <Text>bet coins: {availableCoins * betCoins}</Text>
         <Slider
-          minimumValue={1}
-          maximumValue={availableCoins}
-          step={10}
+          minimumValue={0.25}
+          maximumValue={1}
+          step={0.25}
           value={betCoins}
           onValueChange={setBetCoins}
         />
@@ -156,8 +156,8 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
         <Text></Text>
         {type === 'friend_requests' ? (
           <Button title="Submit" 
-          onPress={() => navigation.navigate('InviteFriend', { dare: dare, coins: betCoins })} />
-        ) : type === 'matchmaking' ? (
+          onPress={() => navigation.navigate('InviteFriend', { dare: dare, coins: (availableCoins * betCoins) })} />
+        ) : type === 'matchmaking_queue' ? (
           user ? ( // Check if user is not null
             <Button 
               title="Submit" 
@@ -166,7 +166,7 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
                   userName: user.userName || 'user',
                   userId: user.uid,
                   dare: dare,
-                  coins: betCoins,
+                  coins: (availableCoins * betCoins),
                 },
               })} 
             />

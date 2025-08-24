@@ -88,6 +88,7 @@ export type ProfileStackParamList = {
     AddInterests: undefined;
     EditInterest: { interestId: string; caption: string; imageUrl: {type: string; uri: string}[]; };
     EditPin: {battle: PinnedBattle;};
+    AllReportsScreen: undefined;
 }
 
 type PinnedBattle = {
