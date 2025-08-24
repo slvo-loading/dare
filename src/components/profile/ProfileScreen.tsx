@@ -49,7 +49,7 @@ type Media = {
 }
 
 export default function ProfileScreen({ navigation }: ProfileStackProps<'ProfileScreen'>) {
-  const { logout, tempLogout, user } = useAuth();
+  const { user } = useAuth();
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [interests, setInterests] = useState<Interests[]>([]);
   const [pinnedGames, setPinnedGames] = useState<Battle[]>([]);
@@ -80,25 +80,14 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   const fetchUserProfile = async () => {
     if (!user) return;
     try {
-      const sentQuery = query(
-        collection(db, "friends"),
-        where("sender_id", "==", user.uid),
-        where("status", "==", "active")
-      );
-
-      const receivedQuery = query(
-        collection(db, "friends"),
-        where("receiver_id", "==", user.uid),
-        where("status", "==", "active")
-      );
-
-      const [sentSnap, receivedSnap] = await Promise.all([
-        getDocs(sentQuery),
-        getDocs(receivedQuery)
-      ]);
-
-      const totalFriends = sentSnap.size + receivedSnap.size;
-
+        const q = query(
+          collection(db, "friends"),
+          where("users", "array-contains", user.uid),
+          where("status", "==", "active")
+        );
+  
+        const totalFriends = await getDocs(q).then(snapshot => snapshot.size);
+  
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (!userDoc.exists()) {
         console.error('User profile not found');

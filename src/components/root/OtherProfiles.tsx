@@ -66,7 +66,7 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
     fetchUserProfile();
     fetchInterests();
     fetchPinnedGames();
-  }, [user?.uid, userProfile]);
+  }, [userId]);
 
 
   // checks the whether the userProfile is a friend to the user
@@ -74,27 +74,26 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
     if (!user) {return}
 
     // gets docs for bi-directional friendship status
-    const q = query(
-      collection(db, "friends"),
-      where("sender_id", "in", [user.uid, userProfile]),
-      where("receiver_id", "in", [user.uid, userProfile])
-    );
+    const docId = [user.uid, userId].sort().join("_");
 
-    const snapshot = await getDocs(q);
-    let status = "none";
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.status === "pending") {
-        // status = data.sender_id === user.uid ? "pending" : "incoming";
-        status = "pending";
-      } else if (data.status === "active") {
-        status = "active";
+    try {
+      const friendshipDocRef = doc(db, "friends", docId);
+      const friendshipDocSnap = await getDoc(friendshipDocRef);
+      if (friendshipDocSnap.exists()) {
+        setFriendStatus(friendshipDocSnap.data().status);
+      } else {
+        setFriendStatus("none");
       }
-    });
 
-    setFriendStatus(status);
+
     setLoading(false);
+    return;
+  
+    } catch (error) {
+      console.error("Error checking friend status:", error);
+      setLoading(false);
+      return;
+    }
   };
 
 
@@ -111,6 +110,7 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
       receiver_id: userProfile,
       status: 'pending',
       created_at: serverTimestamp(),
+      users: [user.uid, userProfile].sort(),
     });
   
     console.log("Friend request sent.");
@@ -134,24 +134,13 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
   const fetchUserProfile = async () => {
       if (!user) return;
       try {
-        const sentQuery = query(
+        const q = query(
           collection(db, "friends"),
-          where("sender_id", "==", userId),
+          where("users", "array-contains", userId),
           where("status", "==", "active")
         );
   
-        const receivedQuery = query(
-          collection(db, "friends"),
-          where("receiver_id", "==", userId),
-          where("status", "==", "active")
-        );
-  
-        const [sentSnap, receivedSnap] = await Promise.all([
-          getDocs(sentQuery),
-          getDocs(receivedQuery)
-        ]);
-  
-        const totalFriends = sentSnap.size + receivedSnap.size;
+        const totalFriends = await getDocs(q).then(snapshot => snapshot.size);
   
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (!userDoc.exists()) {
@@ -215,7 +204,10 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
         console.error('Error fetching pinned games:', error);
       }
     };
-  
+
+  useEffect(() => {
+    console.log("friend status", friendStatus);
+  }, [friendStatus]);
 
   return (
     <View>
@@ -223,8 +215,6 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
         <ActivityIndicator/>
       ) : (
         <View>
-          <Button title="Back" onPress={() => navigation.goBack()}/>
-
           {userProfile ? (
             <View>
               <Image

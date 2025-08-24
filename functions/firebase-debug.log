@@ -116,3 +116,129 @@
 [info] >  {"severity":"INFO","message":"7 - Player 2 missed: false"} {"user":{"severity":"INFO","message":"7 - Player 2 missed: false"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"7 - Player 2 missed: false\"}"}}
 [info] >  {"severity":"INFO","message":"8 - Player 1 missed submission, Player 2 wins"} {"user":{"severity":"INFO","message":"8 - Player 1 missed submission, Player 2 wins"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"8 - Player 1 missed submission, Player 2 wins\"}"}}
 [info] >  {"severity":"INFO","message":"9 - Finished checking"} {"user":{"severity":"INFO","message":"9 - Finished checking"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"9 - Finished checking\"}"}}
+[debug] [2025-08-21T01:11:16.066Z] ----------------------------------------------------------------------
+[debug] [2025-08-21T01:11:16.068Z] Command:       /opt/homebrew/Cellar/node/23.7.0/bin/node /opt/homebrew/bin/firebase functions:shell
+[debug] [2025-08-21T01:11:16.068Z] CLI Version:   14.11.2
+[debug] [2025-08-21T01:11:16.068Z] Platform:      darwin
+[debug] [2025-08-21T01:11:16.068Z] Node Version:  v23.7.0
+[debug] [2025-08-21T01:11:16.069Z] Time:          Wed Aug 20 2025 21:11:16 GMT-0400 (Eastern Daylight Time)
+[debug] [2025-08-21T01:11:16.069Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-08-21T01:11:16.070Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-08-21T01:11:16.164Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-08-21T01:11:16.164Z] > authorizing via signed-in user (sydneylevo@gmail.com)
+[debug] [2025-08-21T01:11:16.164Z] [iam] checking project dare-454c8 for permissions ["firebase.projects.get"]
+[debug] [2025-08-21T01:11:16.164Z] Checked if tokens are valid: false, expires at: 1755554285822
+[debug] [2025-08-21T01:11:16.164Z] Checked if tokens are valid: false, expires at: 1755554285822
+[debug] [2025-08-21T01:11:16.164Z] > refreshing access token with scopes: []
+[debug] [2025-08-21T01:11:16.165Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-08-21T01:11:16.165Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-08-21T01:11:16.242Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-08-21T01:11:16.243Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-08-21T01:11:16.258Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-08-21T01:11:16.258Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-08-21T01:11:16.269Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/dare-454c8:testIamPermissions [none]
+[debug] [2025-08-21T01:11:16.269Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/dare-454c8:testIamPermissions x-goog-quota-user=projects/dare-454c8
+[debug] [2025-08-21T01:11:16.269Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dare-454c8:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-08-21T01:11:16.369Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/dare-454c8:testIamPermissions 200
+[debug] [2025-08-21T01:11:16.369Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dare-454c8:testIamPermissions {"permissions":["firebase.projects.get"]}
+[warn] ⚠  functions: Functions Emulator unable to start on port 5000, starting on 5001 instead. {"metadata":{"emulator":{"name":"functions"},"message":"Functions Emulator unable to start on port 5000, starting on 5001 instead."}}
+[debug] [2025-08-21T01:11:16.481Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-08-21T01:11:16.495Z] defaultcredentials: writing to file /Users/squid.../.config/firebase/sydneylevo_gmail_com_application_default_credentials.json
+[debug] [2025-08-21T01:11:16.496Z] DEBUG: Setting GAC to /Users/squid.../.config/firebase/sydneylevo_gmail_com_application_default_credentials.json
+[debug] [2025-08-21T01:11:16.496Z] Checked if tokens are valid: true, expires at: 1755742275258
+[debug] [2025-08-21T01:11:16.496Z] Checked if tokens are valid: true, expires at: 1755742275258
+[debug] [2025-08-21T01:11:16.496Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/dare-454c8/adminSdkConfig [none]
+[debug] [2025-08-21T01:11:16.944Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/dare-454c8/adminSdkConfig 200
+[debug] [2025-08-21T01:11:16.944Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/dare-454c8/adminSdkConfig {"projectId":"dare-454c8","storageBucket":"dare-454c8.firebasestorage.app"}
+[debug] [2025-08-21T01:11:16.961Z] [functions] Watching "/Users/squid.../VSCodeProjects/habitbattles/functions" for Cloud Functions...
+[debug] [2025-08-21T01:11:16.965Z] Validating nodejs source
+[debug] [2025-08-21T01:11:17.349Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.4.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2025-08-21T01:11:17.349Z] Building nodejs source
+[debug] [2025-08-21T01:11:17.349Z] Failed to find version of module node: reached end of search path /Users/squid.../VSCodeProjects/habitbattles/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "22" doesn't match your global version "23". Using node@23 from host. 
+[debug] [2025-08-21T01:11:17.350Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-08-21T01:11:17.353Z] Found firebase-functions binary at '/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8874
+
+[debug] [2025-08-21T01:11:17.600Z] Got response from /__/functions.yaml {"endpoints":{"checkDailySubmissions":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["us-central1"],"labels":{},"scheduleTrigger":{"schedule":"0 0 28 2 *","retryConfig":{},"timeZone":"America/New_York"},"entryPoint":"checkDailySubmissions"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2025-08-21T01:11:21.624Z] [functions] Loaded functions definitions from source: checkDailySubmissions.
+[debug] [2025-08-21T01:11:21.625Z] [functions[us-central1-checkDailySubmissions]] function ignored because the pubsub emulator does not exist or is not running.
+[info] i  functions: Loaded functions: checkDailySubmissions 
+[warn] ⚠  functions: The following emulators are not running, calls to these services will affect production: firestore, database, pubsub, storage, eventarc, tasks 
+[debug] [2025-08-21T01:11:28.705Z] shell:checkDailySubmissions: trigger={"entryPoint":"checkDailySubmissions","platform":"gcfv2","region":"us-central1","name":"checkDailySubmissions","id":"us-central1-checkDailySubmissions","codebase":"default","availableMemoryMb":256,"labels":{"EVENTARC_CLOUD_EVENT_SOURCE":"run-emulated.googleapis.com/projects/dare-454c8/locations/us-central1/services/checkDailySubmissions"},"timeoutSeconds":60,"secretEnvironmentVariables":[],"eventTrigger":{"eventType":"pubsub","resource":""},"schedule":{"schedule":"0 0 28 2 *","timeZone":"America/New_York","retryConfig":{}}}
+[debug] [2025-08-21T01:11:28.706Z] shell:checkDailySubmissions: opts={}, data={}
+[debug] [2025-08-21T01:11:28.714Z] DEBUG: [worker-pool] addWorker(us-central1-checkDailySubmissions)
+[debug] [2025-08-21T01:11:28.716Z] DEBUG: [worker-pool] Adding worker with key us-central1-checkDailySubmissions, total=1
+[debug] [2025-08-21T01:11:29.048Z] DEBUG: [runtime-status] [78811] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-admin/lib/index.js"}
+[debug] [2025-08-21T01:11:29.048Z] DEBUG: [runtime-status] [78811] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.4.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-functions/lib/v2/index.js"}
+[debug] [2025-08-21T01:11:29.048Z] DEBUG: [runtime-status] [78811] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}]
+[debug] [2025-08-21T01:11:29.048Z] DEBUG: [runtime-status] [78811] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.4.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-functions/lib/v2/index.js"}
+[debug] [2025-08-21T01:11:29.116Z] DEBUG: [runtime-status] [78811] Checked functions.config() {"config":{}}
+[debug] [2025-08-21T01:11:29.116Z] DEBUG: [runtime-status] [78811] firebase-functions has been stubbed. {"functionsResolution":{"declared":true,"installed":true,"version":"6.4.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-functions/lib/v2/index.js"}}
+[debug] [2025-08-21T01:11:29.116Z] DEBUG: [runtime-status] [78811] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.4.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-functions/lib/v2/index.js"}
+[debug] [2025-08-21T01:11:29.119Z] DEBUG: [runtime-status] [78811] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-admin/lib/index.js"}
+[debug] [2025-08-21T01:11:29.119Z] DEBUG: [runtime-status] [78811] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.4.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-functions/lib/v2/index.js"}
+[debug] [2025-08-21T01:11:29.119Z] DEBUG: [runtime-status] [78811] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/squid.../VSCodeProjects/habitbattles/functions/node_modules/firebase-admin/lib/index.js"}}
+[debug] [2025-08-21T01:11:29.120Z] DEBUG: [runtime-status] [78811] initializeApp(DEFAULT) {"storageBucket":"dare-454c8.firebasestorage.app","projectId":"dare-454c8"}
+[debug] [2025-08-21T01:11:29.122Z] DEBUG: [runtime-status] [78811] Functions runtime initialized. {"cwd":"/Users/squid.../VSCodeProjects/habitbattles/functions","node_version":"23.7.0"}
+[debug] [2025-08-21T01:11:29.122Z] DEBUG: [runtime-status] [78811] Listening to port: /var/folders/m9/yp5txtxs6w3_y98rdkwn4jmm0000gn/T/fire_emu_b9f105d60becb08b.sock
+[debug] [2025-08-21T01:11:29.127Z] DEBUG: [worker-us-central1-checkDailySubmissions-70732c72-ef1b-4204-ad00-212d5c7f7e68]: IDLE
+[info] >  {"scheduleTime":"2025-08-21T01:11:29.132Z","severity":"INFO","message":"1 - starting function"} {"user":{"scheduleTime":"2025-08-21T01:11:29.132Z","severity":"INFO","message":"1 - starting function"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"scheduleTime\":\"2025-08-21T01:11:29.132Z\",\"severity\":\"INFO\",\"message\":\"1 - starting function\"}"}}
+[warn] ⚠  functions: The Cloud Firestore emulator is not running, so calls to Firestore will affect production. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"The Cloud Firestore emulator is not running, so calls to Firestore will affect production."}}
+[warn] ⚠  Google API requested!
+   - URL: "https://oauth2.googleapis.com/token"
+   - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"Google API requested!\n   - URL: \"https://oauth2.googleapis.com/token\"\n   - Be careful, this may be a production service."}}
+[info] >  {"severity":"INFO","message":"2 - battlesSnapshot: 3"} {"user":{"severity":"INFO","message":"2 - battlesSnapshot: 3"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"2 - battlesSnapshot: 3\"}"}}
+[info] >  {"severity":"INFO","message":"4: starting check: Ci8AxzZQUbB1K3lY10UV"} {"user":{"severity":"INFO","message":"4: starting check: Ci8AxzZQUbB1K3lY10UV"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"4: starting check: Ci8AxzZQUbB1K3lY10UV\"}"}}
+[info] >  {"severity":"INFO","message":"5 - battle active, checking: Ci8AxzZQUbB1K3lY10UV"} {"user":{"severity":"INFO","message":"5 - battle active, checking: Ci8AxzZQUbB1K3lY10UV"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"5 - battle active, checking: Ci8AxzZQUbB1K3lY10UV\"}"}}
+[info] >  {"severity":"INFO","message":"Current time: 2025-08-21T01:11:29.470Z"} {"user":{"severity":"INFO","message":"Current time: 2025-08-21T01:11:29.470Z"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"Current time: 2025-08-21T01:11:29.470Z\"}"}}
+[info] >  {"severity":"INFO","message":"Game start time: 2025-08-20T16:53:20.454Z"} {"user":{"severity":"INFO","message":"Game start time: 2025-08-20T16:53:20.454Z"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"Game start time: 2025-08-20T16:53:20.454Z\"}"}}
+[info] >  {"severity":"INFO","message":"6 - not a full day passed, skipping battle: Ci8AxzZQUbB1K3lY10UV"} {"user":{"severity":"INFO","message":"6 - not a full day passed, skipping battle: Ci8AxzZQUbB1K3lY10UV"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"6 - not a full day passed, skipping battle: Ci8AxzZQUbB1K3lY10UV\"}"}}
+[info] >  {"severity":"INFO","message":"4: starting check: Z9cQUq1oSlKCgtGE7Kyi"} {"user":{"severity":"INFO","message":"4: starting check: Z9cQUq1oSlKCgtGE7Kyi"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"4: starting check: Z9cQUq1oSlKCgtGE7Kyi\"}"}}
+[info] >  {"severity":"INFO","message":"5 - battle active, checking: Z9cQUq1oSlKCgtGE7Kyi"} {"user":{"severity":"INFO","message":"5 - battle active, checking: Z9cQUq1oSlKCgtGE7Kyi"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"5 - battle active, checking: Z9cQUq1oSlKCgtGE7Kyi\"}"}}
+[info] >  {"severity":"INFO","message":"Current time: 2025-08-21T01:11:29.471Z"} {"user":{"severity":"INFO","message":"Current time: 2025-08-21T01:11:29.471Z"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"Current time: 2025-08-21T01:11:29.471Z\"}"}}
+[info] >  {"severity":"INFO","message":"Game start time: 2025-08-18T21:38:59.392Z"} {"user":{"severity":"INFO","message":"Game start time: 2025-08-18T21:38:59.392Z"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"Game start time: 2025-08-18T21:38:59.392Z\"}"}}
+[info] >  {"severity":"INFO","message":"6 - full day passed, checking submissions: Z9cQUq1oSlKCgtGE7Kyi"} {"user":{"severity":"INFO","message":"6 - full day passed, checking submissions: Z9cQUq1oSlKCgtGE7Kyi"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"6 - full day passed, checking submissions: Z9cQUq1oSlKCgtGE7Kyi\"}"}}
+[info] >  {"severity":"INFO","message":"7 - Player 1 missed: true"} {"user":{"severity":"INFO","message":"7 - Player 1 missed: true"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"7 - Player 1 missed: true\"}"}}
+[info] >  {"severity":"INFO","message":"7 - Player 2 missed: true"} {"user":{"severity":"INFO","message":"7 - Player 2 missed: true"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"7 - Player 2 missed: true\"}"}}
+[info] >  {"severity":"INFO","message":"8 - Both players missed submission, no winner"} {"user":{"severity":"INFO","message":"8 - Both players missed submission, no winner"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"8 - Both players missed submission, no winner\"}"}}
+[info] >  {"severity":"INFO","message":"4: starting check: ih8HWOHZ7bBOxtrQyHYn"} {"user":{"severity":"INFO","message":"4: starting check: ih8HWOHZ7bBOxtrQyHYn"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"4: starting check: ih8HWOHZ7bBOxtrQyHYn\"}"}}
+[info] >  {"severity":"INFO","message":"5 - battle active, checking: ih8HWOHZ7bBOxtrQyHYn"} {"user":{"severity":"INFO","message":"5 - battle active, checking: ih8HWOHZ7bBOxtrQyHYn"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"5 - battle active, checking: ih8HWOHZ7bBOxtrQyHYn\"}"}}
+[info] >  {"severity":"INFO","message":"Current time: 2025-08-21T01:11:29.618Z"} {"user":{"severity":"INFO","message":"Current time: 2025-08-21T01:11:29.618Z"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"Current time: 2025-08-21T01:11:29.618Z\"}"}}
+[info] >  {"severity":"INFO","message":"Game start time: 2025-08-14T01:06:52.342Z"} {"user":{"severity":"INFO","message":"Game start time: 2025-08-14T01:06:52.342Z"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"Game start time: 2025-08-14T01:06:52.342Z\"}"}}
+[info] >  {"severity":"INFO","message":"6 - full day passed, checking submissions: ih8HWOHZ7bBOxtrQyHYn"} {"user":{"severity":"INFO","message":"6 - full day passed, checking submissions: ih8HWOHZ7bBOxtrQyHYn"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"6 - full day passed, checking submissions: ih8HWOHZ7bBOxtrQyHYn\"}"}}
+[info] >  {"severity":"INFO","message":"7 - Player 1 missed: true"} {"user":{"severity":"INFO","message":"7 - Player 1 missed: true"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"7 - Player 1 missed: true\"}"}}
+[info] >  {"severity":"INFO","message":"7 - Player 2 missed: false"} {"user":{"severity":"INFO","message":"7 - Player 2 missed: false"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"7 - Player 2 missed: false\"}"}}
+[info] >  {"severity":"INFO","message":"8 - Player 1 missed submission, Player 2 wins"} {"user":{"severity":"INFO","message":"8 - Player 1 missed submission, Player 2 wins"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"8 - Player 1 missed submission, Player 2 wins\"}"}}
+[info] >  {"severity":"INFO","message":"9 - Finished checking"} {"user":{"severity":"INFO","message":"9 - Finished checking"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-checkDailySubmissions"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"INFO\",\"message\":\"9 - Finished checking\"}"}}

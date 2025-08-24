@@ -11,6 +11,7 @@ import {
     setDoc, 
     serverTimestamp,
     updateDoc,
+    documentId,
  } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
@@ -44,120 +45,89 @@ export default function FriendsList({ navigation, route }: ProfileStackProps<'Fr
         
         try {
             // 1. Get all active friendships (both sent and received)
-            const sentQuery = query(collection(db, "friends"), where("sender_id", "==", userId), where("status", "==", "active"));
-            const receivedQuery = query(collection(db, "friends"), where("receiver_id", "==", userId), where("status", "==", "active"));
+            const q = query(collection(db, "friends"), where("users", "array-contains", userId));
         
-            const [sentSnap, receivedSnap] = await Promise.all([
-            getDocs(sentQuery),
-            getDocs(receivedQuery),
-            ]);
+            const querySnapshot = await getDocs(q);
 
-            // 2. Extract the other person’s ID in each case
-            const friendIds: string[] = [];
-        
-            sentSnap.forEach(doc => {
+            const friendsList: string[] = [];
+            const pendingInList: string[] = [];
+
+
+            querySnapshot.forEach(doc => {
             const data = doc.data();
-            friendIds.push(data.receiver_id);
-            });
-        
-            receivedSnap.forEach(doc => {
-            const data = doc.data();
-            friendIds.push(data.sender_id);
-            });
-        
-            // 3. Fetch user info for each friend
-            const friendData = await Promise.all(
-            friendIds.map(async (id) => {
-                const userDoc = await getDoc(doc(db, "users", id));
-                if (userDoc.exists()) {
-                const data = userDoc.data();
-                return {
-                    uid: id,
-                    userName: data.username,
-                    avatarUrl: data.avatar_url,
-                    name: data.name,
-                    status: "active",
-                    last_active: data.last_active,
-                };
+            const sender = data.sender_id === userId;
+            if (sender) {
+                if (data.status === "active") {
+                    friendsList.push(data.receiver_id);
                 }
-                return null;
-            })
-            );
-        
-            // 4. Clean out nulls and sort based on last active time
-            const filteredFriend = friendData
-            .filter((friend): friend is Friend => friend !== null)
-            .sort((a, b) => {
-                const aTime = a.last_active?.toMillis?.() || 0;
-                const bTime = b.last_active?.toMillis?.() || 0;
-                return bTime - aTime
+            } else {
+                if (data.status === "active") {
+                    friendsList.push(data.sender_id);
+                } else if (data.status === "pending") {
+                    pendingInList.push(data.sender_id);
+                }
+            }
             });
-        
-            // 5. Save to state
-            setFriendsList(filteredFriend);
+
+            const chunkSize = 10;
+
+            if (pendingInList.length > 0) {
+                const chunks = [];
+                for (let i = 0; i < pendingInList.length; i += chunkSize) {
+                    chunks.push(pendingInList.slice(i, i + chunkSize));
+                }
+
+                const friendData: Friend[] = [];
+                for (const chunk of chunks) {
+                    const q = query(collection(db, "users"), where(documentId(), "in", chunk));
+                    const querySnapshot = await getDocs(q);
+
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        friendData.push({
+                        uid: doc.id,
+                        userName: data.username,
+                        avatarUrl: data.avatar_url,
+                        name: data.name,
+                        status: "active",
+                        last_active: data.last_active,
+                        });
+                    });
+                }
+
+                setPendingRequests(friendData)   
+            }
+
+            if (friendsList.length > 0) {
+                const chunks = [];
+                for (let i = 0; i < friendsList.length; i += chunkSize) {
+                    chunks.push(friendsList.slice(i, i + chunkSize));
+                }
+
+                const friendData: Friend[] = [];
+                for (const chunk of chunks) {
+                    const q = query(collection(db, "users"), where(documentId(), "in", chunk));
+                    const querySnapshot = await getDocs(q);
+
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        friendData.push({
+                        uid: doc.id,
+                        userName: data.username,
+                        avatarUrl: data.avatar_url,
+                        name: data.name,
+                        status: "active",
+                        last_active: data.last_active,
+                        });
+                    });
+                }
+
+                setFriendsList(friendData)   
+            }
+
         
         } catch (err) {
             console.error("Error fetching friends:", err);
-        }
-    };
-
-
-    useEffect(() => {
-        fetchPendingRequests();
-    }, []);
-
-    const fetchPendingRequests = async () => {
-        if (!userId) return;
-        
-        try {
-            // 1. Get all pending requests friendships
-            const receivedQuery = query(collection(db, "friends"), where("receiver_id", "==", userId), where("status", "==", "pending"));
-        
-            const [sentSnap] = await Promise.all([
-            getDocs(receivedQuery),
-            ]);
-
-            // 2. Extract the other person’s ID in each case
-            const friendIds: string[] = [];
-        
-            sentSnap.forEach(doc => {
-            const data = doc.data();
-            friendIds.push(data.sender_id);
-            });
-        
-            // 3. Fetch user info for each friend
-            const friendData = await Promise.all(
-            friendIds.map(async (id) => {
-                const userDoc = await getDoc(doc(db, "users", id));
-                if (userDoc.exists()) {
-                const data = userDoc.data();
-                return {
-                    uid: id,
-                    userName: data.username,
-                    avatarUrl: data.avatar_url,
-                    name: data.name,
-                    status: "pending",
-                    last_active: data.last_active,
-                };
-                }
-                return null;
-            })
-            );
-        
-            // 4. Clean out nulls and sort based on last active time
-            const filteredFriend = friendData
-            .filter((friend): friend is Friend => friend !== null)
-            .sort((a, b) => {
-                const aTime = a.last_active?.toMillis?.() || 0;
-                const bTime = b.last_active?.toMillis?.() || 0;
-                return bTime - aTime
-            });
-        
-            // 5. Save to state
-            setPendingRequests(filteredFriend);
-        
-        } catch (err) {
-            console.error("Error fetching requests:", err);
         }
     };
 
@@ -195,6 +165,7 @@ export default function FriendsList({ navigation, route }: ProfileStackProps<'Fr
           receiver_id: friendId,
           status: 'pending',
           created_at: serverTimestamp(),
+          users: [userId, friendId],
         });
       
         console.log("Friend request sent.");
@@ -221,8 +192,18 @@ export default function FriendsList({ navigation, route }: ProfileStackProps<'Fr
 
     console.log("Friend request accepted.");
 
-    fetchPendingRequests();
-    fetchFriends();
+    setFriendsList((prev) => {
+        // Get the friend from pending requests
+        const acceptedFriend = pendingRequests.find((friend) => friend.uid === friendId);
+        if (acceptedFriend) {
+          return [acceptedFriend, ...prev];
+        }
+        return prev;
+    });
+
+    setPendingRequests((prev) =>
+        prev.filter((friend) => friend && friend.uid !== friendId)
+    );
     };
 
 
@@ -230,12 +211,8 @@ export default function FriendsList({ navigation, route }: ProfileStackProps<'Fr
     navigation.navigate('OtherProfiles', { userId: friendId });
     };
 
-    useEffect(() => {
-        console.log('Friends List:', friendsList);
-    }, [friendsList]);
-
     const handleSearchUid = async (enteredUid: string) => {
-        if (!userId) {
+        if (!userId || enteredUid === userId) {
             console.log("User not authenticated.");
             return;
         }
