@@ -1,1 +1,1 @@
-# dare
+# haBet | Bet on yourself.
