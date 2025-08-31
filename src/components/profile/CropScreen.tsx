@@ -34,6 +34,8 @@ export default function CropScreen({ navigation, route }: ProfileStackProps<'Cro
         });
       }
 
+      user.avatarUrl = downloadUrl || '';
+
       navigation.navigate('ProfileScreen');
     } catch (error) {
       console.error("Error updating profile:", error);

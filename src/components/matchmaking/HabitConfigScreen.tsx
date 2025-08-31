@@ -12,7 +12,7 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
   const { type, battle } = route.params;
   const [dare, setDare] = useState<string>('');
   const { user } = useAuth();
-  const [betCoins, setBetCoins] = useState<number>(1);
+  const [betCoins, setBetCoins] = useState<number>(0.25);
   const [availableCoins, setAvailableCoins] = useState<number>(0);
   const [showModal, setShowModal] = useState<boolean>(true);
 
@@ -51,17 +51,16 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
 
           if (!userSnap.exists() || !battleSnap.exists()) throw new Error("User or battle does not exist");
       
-          const userCoins = userSnap.data().coins || 0;
           const battleCoins = battleSnap.data().coins || 0;
       
           // Check balance
-          if (userCoins < betCoins) {
+          if (user.coins < betCoins) {
             throw new Error("Not enough coins to send invite");
           }
       
           // Deduct coins
           transaction.update(userRef, {
-            coins: userCoins - betCoins,
+            coins: user.coins - betCoins,
           });
 
           transaction.update(battleRef, {
@@ -75,11 +74,15 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
           navigation.navigate("GameStart", { 
             type: "accept", 
             match: {
-              opponentName: battle.opponentName,
+              opponentUserName: battle.opponentName,
               opponentId: battle.opponentId,
+              opponentAvatar: battle.avatarUrl,
+              opponentName: battle.opponentName,
               dare: battle.users_dare,
             }
           });
+
+          user.coins = user.coins - betCoins; 
 
         } catch (error) {
           console.error("Transaction failed:", error);
@@ -143,11 +146,11 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
 
         <Text></Text>
         <Text>You have {availableCoins} coins. How much will you bet?</Text>
-        <Text>bet coins: {betCoins}</Text>
+        <Text>bet coins: {availableCoins * betCoins}</Text>
         <Slider
-          minimumValue={1}
-          maximumValue={availableCoins}
-          step={10}
+          minimumValue={0.25}
+          maximumValue={1}
+          step={0.25}
           value={betCoins}
           onValueChange={setBetCoins}
         />
@@ -156,8 +159,8 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
         <Text></Text>
         {type === 'friend_requests' ? (
           <Button title="Submit" 
-          onPress={() => navigation.navigate('InviteFriend', { dare: dare, coins: betCoins })} />
-        ) : type === 'matchmaking' ? (
+          onPress={() => navigation.navigate('InviteFriend', { dare: dare, coins: (availableCoins * betCoins) })} />
+        ) : type === 'matchmaking_queue' ? (
           user ? ( // Check if user is not null
             <Button 
               title="Submit" 
@@ -166,7 +169,9 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
                   userName: user.userName || 'user',
                   userId: user.uid,
                   dare: dare,
-                  coins: betCoins,
+                  avatarUrl: user.avatarUrl,
+                  name: user.name || 'User',
+                  coins: (availableCoins * betCoins),
                 },
               })} 
             />

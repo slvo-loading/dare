@@ -15,8 +15,9 @@ import {
   getDoc,
   runTransaction,
   updateDoc,
-  writeBatch,
-  deleteDoc
+  setDoc,
+  deleteDoc,
+  orderBy
 } from 'firebase/firestore';
 
 type Battle = 
@@ -24,6 +25,7 @@ type Battle =
   battleId: string;
   opponentId: string;
   opponentName: string,
+  opponentUserName: string,
   avatarUrl: string,
   users_dare: string,
   status: string, 
@@ -47,6 +49,7 @@ type Completed =
   startDate: any,
   endDate: any,
   coins: number,
+  opponentUserName: string,
   users_dare: string;
 }
 
@@ -58,7 +61,6 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   const [completedGames, setCompletedGames] = useState<Completed[]>([]);
   const [archivedGames, setArchivedGames] = useState<Completed[]>([]);
   const [brokeModal, setBrokeModal] = useState(false);
-  const [availableCoins, setAvailableCoins] = useState<number>(0);
   const [selectedGame, setSelectedGame] = useState<Selected | null>(null);
   const [showSubmissions, setShowSubmissions] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
@@ -66,23 +68,21 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   // refetches everything everytime you change the screen ...hmmmm
   useFocusEffect(
     useCallback(() => {
+      console.log('Screen focused, fetching battles...');
       fetchBattles();
-      fetchCoins();
       setLoading(false);
     }, [])
   )
 
   const fetchBattles = async () => {
+    let step = 0;
     if (!user) return;
+    console.log(user)
 
     try {
-      const player1Query = query(collection(db, "games"), where("player1_id", "==", user.uid));
-      const player2Query = query(collection(db, "games"), where("player2_id", "==", user.uid));
-  
-      const [player1Snap, player2Snap] = await Promise.all([
-      getDocs(player1Query),
-      getDocs(player2Query),
-      ]);
+      //get all the docs with the user
+      const q = query(collection(db, "games"), where("users", "array-contains", user.uid), orderBy("start_date", "desc"));
+      const playerSnap = await getDocs(q);
 
       // 2. Extract the other person’s ID in each case
       const battles: Battle[] = [];
@@ -95,8 +95,9 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
       const today = now.toISOString().split("T")[0];
     
   
-      player1Snap.forEach(doc => {
+      playerSnap.forEach(doc => {
         const data = doc.data();
+        const player1 = data.player1_id === user.uid;
 
         const lastSubDate = data.player1_last_submission?.toDate().toISOString().split("T")[0] || null;
         let allowSubs;
@@ -109,42 +110,46 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
         if (data.status === 'active') {
           battles.push({
             battleId: doc.id,
-            opponentId: data.player2_id,
-            users_dare: data.player2_dare,
+            opponentId: player1 ? data.player2_id : data.player1_id,
+            users_dare: player1 ? data.player2_dare : data.player1_dare,
             status: data.status,
             opponentName: '',
+            opponentUserName: '',
             avatarUrl: '',
             coins: data.coins,
             allowSubmission: allowSubs,
           });
         } else if (data.status === 'pending' || data.status === 'declined') {
-          pendingOutRequests.push({
-            battleId: doc.id,
-            opponentId: data.player2_id,
-            users_dare: data.player2_dare,
-            status: data.status,
-            opponentName: '',
-            avatarUrl: '',
-            coins: data.coins,
-            allowSubmission: allowSubs,
-          });
-        } else if (data.status === 'completed' && !data.player1_status) {
-          completedGames.push({
-            battleId: doc.id,
-            opponentId: data.player2_id,
-            status: data.status,
-            opponentName: '',
-            avatarUrl: '',
-            startDate: data.start_date,
-            endDate: data.end_date,
-            winner: data.winner,
-            coins: data.coins,
-            users_dare: data.player2_dare
-          });
-        } else if (data.status === 'completed' && data.player1_status === 'archived') {
+          if (player1) {
+            pendingOutRequests.push({
+              battleId: doc.id,
+              opponentId: data.player2_id,
+              users_dare: data.player2_dare,
+              status: data.status,
+              opponentName: '',
+              opponentUserName: '',
+              avatarUrl: '',
+              coins: data.coins,
+              allowSubmission: allowSubs,
+            });
+          } else {
+            pendingInRequests.push({
+              battleId: doc.id,
+              opponentId: data.player1_id,
+              users_dare: data.player1_dare,
+              status: data.status,
+              opponentName: '',
+              avatarUrl: '',
+              opponentUserName: '',
+              coins: data.coins,
+              allowSubmission: allowSubs,
+            });
+          }
+        } else if (data.status === 'completed' && ((player1 && data.player1_status === 'archived') || (!player1 && data.player2_status === 'archived'))) {
           archivedGames.push({
             battleId: doc.id,
-            opponentId: data.player2_id,
+            opponentId: player1 ? data.player2_id : data.player1_id,
+            users_dare: player1 ? data.player2_dare : data.player1_dare,
             status: data.status,
             opponentName: '',
             avatarUrl: '',
@@ -152,76 +157,28 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
             endDate: data.end_date,
             winner: data.winner,
             coins: data.coins,
-            users_dare: data.player2_dare
+            opponentUserName: '',
           });
-        }
-      });
-  
-      player2Snap.forEach(doc => {
-        const data = doc.data();
-
-        const lastSubDate = data.player2_last_submission?.toDate().toISOString().split("T")[0] || null;
-        let allowSubs;
-        if (lastSubDate) {
-          allowSubs = lastSubDate === today;
-        } else {
-          allowSubs = false;
-        }
-
-        if (data.status === 'active') {
-        battles.push({
-          battleId: doc.id,
-          opponentId: data.player1_id,
-          users_dare: data.player1_dare,
-          status: data.status,
-          opponentName: '',
-          avatarUrl: '',
-          coins: data.coins,
-          allowSubmission: allowSubs,
-        });
-      } else if (data.status === 'pending') {
-          pendingInRequests.push({
-            battleId: doc.id,
-            opponentId: data.player1_id,
-            users_dare: data.player1_dare,
-            status: data.status,
-            opponentName: '',
-            avatarUrl: '',
-            coins: data.coins,
-            allowSubmission: allowSubs,
-          });
-        } else if (data.status === 'completed' && !data.player2_status) {
-          completedGames.push({
-            battleId: doc.id,
-            opponentId: data.player2_id,
-            status: data.status,
-            opponentName: '',
-            avatarUrl: '',
-            startDate: data.start_date,
-            endDate: data.end_date,
-            winner: data.winner,
-            coins: data.coins,
-            users_dare: data.player1_dare,
-          });
-        }
-        else if (data.status === 'completed' && data.player2_status === 'archived') {
-          archivedGames.push({
-            battleId: doc.id,
-            opponentId: data.player1_id,
-            status: data.status,
-            opponentName: '',
-            avatarUrl: '',
-            startDate: data.start_date,
-            endDate: data.end_date,
-            winner: data.winner,
-            coins: data.coins,
-            users_dare: data.player1_dare,
-          });
+        } else if (data.status === 'completed' && ((player1 && !data.player1_status) || (!player1 && !data.player2_status))) {
+            completedGames.push({
+              battleId: doc.id,
+              opponentId: player1? data.player2_id : data.player1_id,
+              users_dare: player1? data.player2_dare : data.player1_dare,
+              status: data.status,
+              opponentName: '',
+              avatarUrl: '',
+              startDate: data.start_date,
+              endDate: data.end_date,
+              winner: data.winner,
+              coins: data.coins,
+              opponentUserName: '',
+            });
         }
       });
 
       const battleData = await Promise.all(
         battles
+        .filter((battle) => battle.opponentId)
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
@@ -229,50 +186,58 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
 
           return {
             ... battle,
-            opponentName: opponentData?.username,
-            avatarUrl: opponentData?.avatar_url
+            opponentUserName: opponentData?.username,
+            avatarUrl: opponentData?.avatar_url,
+            opponentName: opponentData?.name || opponentData?.username || 'User',
           }
         })
       )
 
       const pendingInData = await Promise.all(
         pendingInRequests
+        .filter((battle) => battle.opponentId)
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
           const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
           return {
             ... battle,
-            opponentName: opponentData?.username,
-            avatarUrl: opponentData?.avatar_url
+            opponentUserName: opponentData?.username,
+            avatarUrl: opponentData?.avatar_url, 
+            opponentName: opponentData?.name || opponentData?.username || 'User',
           }
         })
       )
 
+
       const pendingOutData = await Promise.all(
         pendingOutRequests
+        .filter((battle) => battle.opponentId)
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
           const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
           return {
             ... battle,
-            opponentName: opponentData?.username,
-            avatarUrl: opponentData?.avatar_url
+            opponentUserName: opponentData?.username,
+            avatarUrl: opponentData?.avatar_url, 
+            opponentName: opponentData?.name || opponentData?.username || 'User',
           }
         })
       )
 
       const completedGamesData = await Promise.all(
         completedGames
+        .filter((battle) => battle.opponentId)
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
           const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
           return {
             ... battle,
-            opponentName: opponentData?.username,
-            avatarUrl: opponentData?.avatar_url
+            opponentUserName: opponentData?.username,
+            avatarUrl: opponentData?.avatar_url, 
+            opponentName: opponentData?.name || opponentData?.username || 'User',
           }
         })
       )
@@ -280,14 +245,16 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
 
       const archivedGamesData = await Promise.all(
         archivedGames
+        .filter((battle) => battle.opponentId)
         .map(async (battle) => {
           const opponentRef = doc(db, "users", battle.opponentId);
           const opponentSnap = await getDoc(opponentRef);
           const opponentData = opponentSnap.exists() ? opponentSnap.data() : null;
           return {
             ... battle,
-            opponentName: opponentData?.username,
-            avatarUrl: opponentData?.avatar_url
+            opponentUserName: opponentData?.username,
+            avatarUrl: opponentData?.avatar_url, 
+            opponentName: opponentData?.name || opponentData?.username || 'User',
           }
         })
       )
@@ -308,23 +275,25 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   };
 
 
-  const fetchCoins = async () => {
-    if (!user) return;
-    try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        setAvailableCoins(data.coins || 0);
-      }
-    } catch (error) {
-      console.error("Error fetching coins:", error);
-      return 0;
-    }
-  }
+  // const fetchCoins = async () => {
+  //   if (!user) return;
+  //   try {
+  //     const userDoc = await getDoc(doc(db, 'users', user.uid));
+  //     if (userDoc.exists()) {
+  //       const data = userDoc.data();
+  //       setAvailableCoins(data.coins || 0);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching coins:", error);
+  //     return 0;
+  //   }
+  // }
 
 
+  // navs to the habit config page
   const viewRequest = async (battle: Battle) => {
-    if (availableCoins <= 0) {
+    if (!user) return;
+    if (user.coins <= 0) {
       setBrokeModal(true);
       return;
     } else {
@@ -333,6 +302,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   }
 
 
+  // when the user that has the outgoing request receives declined, they have to 'x' out the request to receive their coins again
   const declineRequest = async (battleId: string, opponentId: string) => {
     if (!user) return;
   
@@ -360,6 +330,7 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
         status: 'declined',
       });
     });
+
   
     // Update UI after transaction
     setPendingInRequests(prevPending => 
@@ -368,88 +339,85 @@ export default function BattleScreen({ navigation }: BattleStackProps<'BattleScr
   };
   
 
+  // sets to archive or pin or deleted once the game is done
+  const handleStatus = async (battleId: string, status: string) => {
+    if (!user) return;
+    const ref = doc(db, 'games', battleId);
+    const battleSnap = await getDoc(ref);
+    const battle = battleSnap.data();
 
-const handleStatus = async (battleId: string, status: string) => {
-  if (!user) return;
-  const ref = doc(db, 'games', battleId);
-  const battleSnap = await getDoc(ref);
-  const battle = battleSnap.data();
+    if( !battle) return;
 
-  if( !battle) return;
+    if (battle.player1_id === user.uid) {
+      await updateDoc(ref, {
+        player1_status: status
+      })
+    } else {
+      await updateDoc(ref, {
+        player2_status: status
+      })
+    }
 
-  if (battle.player1_id === user.uid) {
-    await updateDoc(ref, {
-      player1_status: status
-    })
-  } else {
-    await updateDoc(ref, {
-      player2_status: status
-    })
+    setArchivedGames(prevPending => {
+      const updatedPending = prevPending.filter(b => b.battleId !== battleId);
+      return updatedPending;
+    });
   }
 
-  setArchivedGames(prevPending => {
-    const updatedPending = prevPending.filter(b => b.battleId !== battleId);
-    return updatedPending;
-  });
-}
 
-const newBattle = () => {
-  if(availableCoins <= 0) {
-    setBrokeModal(true);
-    return;
-  } else {
-    navigation.navigate('OpponentSelection');}
-}
-
-const handlePin = async (battle: Completed) => {
+  // navigates to opponent selection if the user has enough coins
+  const newBattle = () => {
   if (!user) return;
-  handleStatus(battle.battleId, 'pinned');
-
-  const batch = writeBatch(db);
-  const q = query(
-    collection(db, 'games', battle.battleId, 'submissions'),
-    where('user_id', '==', user.uid)
-  );
-
-  const submissionsSnap = await getDocs(q);
-
-  const pinnedGamesRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId);
-  batch.set(pinnedGamesRef, {
-    winner: battle.winner,
-    opponent_id: battle.opponentId,
-    opponent_name: battle.opponentName,
-    opponent_avatar: battle.avatarUrl,
-    start_date: battle.startDate,
-    end_date: battle.endDate,
-  });
-
-  submissionsSnap.forEach(sub => {
-    const pinnedSubRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId, 'submissions', sub.id);
-    batch.set(pinnedSubRef, sub.data());
-  });
-
-  await batch.commit();
-}
-
-const deleteRequest = async (battleId: string) => {
-  if (!user) return;
-  const ref = doc(db, 'games', battleId);
-  await deleteDoc(ref);
-  setPendingOutRequests(prevPending => {
-    const updatedPending = prevPending.filter(b => b.battleId !== battleId);
-    return updatedPending;
-  });
+    if(user.coins <= 0) {
+      setBrokeModal(true);
+      return;
+    } else {
+      navigation.navigate('OpponentSelection');}
   }
 
+
+  // pins a game after it is complete
+  const handlePin = async (battle: Completed) => {
+    if (!user) return;
+    handleStatus(battle.battleId, 'pinned');
+
+    const pinnedGamesRef = doc(db, 'users', user.uid, 'pinned_games', battle.battleId);
+    await setDoc(pinnedGamesRef, {
+      winner: battle.winner,
+      opponent_id: battle.opponentId,
+      opponent_name: battle.opponentName,
+      opponent_avatar: battle.avatarUrl,
+      start_date: battle.startDate,
+      end_date: battle.endDate,
+    });
+
+  }
+
+  
+  // deletes a game if it is declined by the invited user
+  const deleteRequest = async (battleId: string) => {
+    if (!user) return;
+    const ref = doc(db, 'games', battleId);
+    await deleteDoc(ref);
+
+    setPendingOutRequests(prevPending => {
+      const updatedPending = prevPending.filter(b => b.battleId !== battleId);
+      return updatedPending;
+    });
+  }
+
+
+  // sets the status of the game to declined
   const declineGameAlert = (battleId: string, opponentId: string) =>
     Alert.alert('Decline Request', `Are you sure you want to decline?`, [
       {
-        text: 'Cancel',
+        text: 'Cancel', 
         style: 'cancel',
       },
       {text: 'Decline', onPress: () => declineRequest(battleId, opponentId)},
-    ]);
+  ]);
 
+ 
   return (
     <SafeAreaView>
       <Button 
@@ -477,7 +445,7 @@ const deleteRequest = async (battleId: string) => {
                 <Text style={{ color: '#666', marginRight: 10 }}>coins bet: {battle.coins}</Text>
                 <Text style={{ color: '#666', marginRight: 10 }}>status: {battle.status}</Text>
                 {battle.status === 'declined' && (
-                  <Button title="x" onPress={() => deleteRequest(battle.battleId)}/>
+                  <Button title="x" onPress={() => {deleteRequest(battle.battleId); (user && (user.coins = user.coins + battle.coins)); }}/>
                 )}
                 </View>
           ))}

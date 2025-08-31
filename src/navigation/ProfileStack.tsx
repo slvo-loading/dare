@@ -7,8 +7,8 @@ import CropScreen from '../components/profile/CropScreen';
 import AddInterestScreen from '../components/profile/AddInterestScreen';
 import EditInterestScreen from '../components/profile/EditInterest';
 import EditPin from '../components/profile/EditPin';
+import AllReportsScreen from '../components/profile/AllReportsScreen';
 import { ProfileStackParamList } from '../types';
-
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
@@ -23,6 +23,7 @@ export default function ProfileStack() {
         <Stack.Screen name="AddInterests" component={AddInterestScreen} />
         <Stack.Screen name="EditInterest" component={EditInterestScreen} />
         <Stack.Screen name="EditPin" component={EditPin} />
+        <Stack.Screen name="AllReportsScreen" component={AllReportsScreen} />
     </Stack.Navigator>
   );
 }

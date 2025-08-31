@@ -12,6 +12,7 @@ export default function Settings({ navigation }: ProfileStackProps<'Settings'>) 
         title="Save Changes"
         onPress={() => navigation.navigate('ProfileScreen')}
       />
+      <Button title="Reports" onPress={() => navigation.navigate('AllReportsScreen')}/>
       <Button
         title="Logout"
         onPress={() => {

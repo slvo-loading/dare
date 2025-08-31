@@ -70,7 +70,7 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
 
   useFocusEffect(
     useCallback(() => {
-      fetchUserProfile();
+      // fetchUserProfile();
       fetchInterests();
       fetchPinnedGames();
       setLoading(false);
@@ -87,21 +87,14 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
         );
   
         const totalFriends = await getDocs(q).then(snapshot => snapshot.size);
-  
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (!userDoc.exists()) {
-        console.error('User profile not found');
-        return;
-      }
 
-      const userData = userDoc.data();
       setUserProfile({
-        userName: userData.username,
-        avatarUrl: userData.avatar_url,
-        name: userData.name,
-        bio: userData.bio,
+        userName: user.userName,
+        avatarUrl: user.avatarUrl,
+        name: user.name,
+        bio: user.bio,
         friendCount: totalFriends,
-        coins: userData.coins,
+        coins: user.coins,
       });
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -195,17 +188,17 @@ export default function ProfileScreen({ navigation }: ProfileStackProps<'Profile
   return (
     <SafeAreaView>
     {/* {loading ? <ActivityIndicator size="large" color="#0000ff" /> : null} */}
-      {userProfile ? (
+      {user ? (
         <View>
             <Image
-            source={{ uri: userProfile.avatarUrl }}
+            source={{ uri: user.avatarUrl }}
             style={{ width: 50, height: 50, borderRadius: 25, marginRight: 10 }}
             />
-            <Text style={{ fontWeight: 'bold' }}>username: {userProfile.userName}</Text>
-            <Text style={{ color: '#666' }}>name: {userProfile.name}</Text>
-            <Text style={{ color: '#666' }}>bio: {userProfile.bio}</Text>
-            <Text style={{ color: '#666' }}>coins: {userProfile.coins}</Text>
-            <Button title={`${userProfile.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList', { userId: user?.uid || ''})}/>
+            <Text style={{ fontWeight: 'bold' }}>username: {user.userName}</Text>
+            <Text style={{ color: '#666' }}>name: {user.name}</Text>
+            <Text style={{ color: '#666' }}>bio: {user.bio}</Text>
+            <Text style={{ color: '#666' }}>coins: {user.coins}</Text>
+            {/* <Button title={`${user.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList', { userId: user?.uid || ''})}/> */}
 
             {pinnedGames.length > 0 && (
           <ScrollView horizontal={true} style={{ marginLeft: 10 }}>

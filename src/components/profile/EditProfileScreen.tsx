@@ -51,6 +51,10 @@ export default function EditProfileScreen({navigation}: ProfileStackProps<'EditP
         username: userName,
     });
 
+    user.bio = bio;
+    user.name = name;
+    user.userName = userName;
+
       navigation.goBack();
     } catch (error) {
       console.error("Error updating profile:", error);

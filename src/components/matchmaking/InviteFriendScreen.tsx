@@ -32,8 +32,7 @@ type InviteScreenRouteProp = RouteProp<
 export default function InviteFriendScreen({ navigation }: BattleStackProps<'InviteFriend'>) {
   const { user } = useAuth();
   const [friendsList, setFriendsList] = useState<Friend[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const route = useRoute<InviteScreenRouteProp>();
   const [dare, setDare] = useState(route.params.dare);
   const coins = route.params.coins;
@@ -107,8 +106,8 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
     console.log('open a modal of the profile')
   };
   
-  const sendInvite = async (selectedId: string, selectedName: string,) => {
-    if (!user) return;
+  const sendInvite = async () => {
+    if (!user || !selectedFriend) return;
   
     const userRef = doc(db, "users", user.uid);
   
@@ -133,20 +132,25 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
       const gameRef = doc(collection(db, "games"));
       transaction.set(gameRef, {
         player1_id: user.uid,
-        player2_id: selectedId,
+        player2_id: selectedFriend.uid,
+        user: [user.uid, selectedFriend.uid],
         player1_dare: dare,
         player2_dare: null,
         status: "pending",
         coins: coins,
       });
+
+      user.coins = currentCoins - coins; 
     });
   
     // Navigate after transaction is committed
     navigation.navigate("GameStart", { 
       type: "friend", 
       match: {
-        opponentName: selectedName,
-        opponentId: selectedId,
+        opponentName: selectedFriend.userName,
+        opponentId: selectedFriend.uid,
+        opponentAvatar: selectedFriend.avatarUrl,
+        opponentUserName: selectedFriend.userName,
         dare: '',
       }
     });
@@ -171,17 +175,14 @@ export default function InviteFriendScreen({ navigation }: BattleStackProps<'Inv
                 <Text style={{ fontWeight: 'bold' }}>{friend!.userName}</Text>
                 <Text style={{ color: '#666' }}>{friend!.name}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {setSelectedId(friend!.uid); setSelectedName(friend!.userName)}}>
+            <TouchableOpacity onPress={() => setSelectedFriend(friend)}>
                 <Text style={{ color: 'blue' }}>select</Text>
             </TouchableOpacity>
             </View>
         ))}
     </ScrollView>
-    {selectedId && selectedName ? (
-      <Button title="Next" onPress={() => sendInvite(selectedId, selectedName)}/>
-    ) : (
-      <Button title="Next" onPress={() => Alert.alert("Please select a friend")}/>
-    )}
+    {selectedFriend && (
+      <Button title="Next" onPress={() => sendInvite()}/> )}
     </SafeAreaView>
   );
 }

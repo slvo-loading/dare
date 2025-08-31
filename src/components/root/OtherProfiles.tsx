@@ -1,10 +1,11 @@
 import { View, Text, Button, ActivityIndicator, Image, ScrollView, 
-  TouchableOpacity, Modal, StyleSheet,} from "react-native";
+  TouchableOpacity, Modal, StyleSheet, Alert, TextInput } from "react-native";
+  import { Dropdown } from "react-native-element-dropdown";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../../firebaseConfig";
 import { query, where, deleteDoc, getDocs, collection, 
-  doc, setDoc, serverTimestamp, orderBy, getDoc } from "firebase/firestore";
+  doc, setDoc, serverTimestamp, orderBy, getDoc, Timestamp, runTransaction } from "firebase/firestore";
 import PostView from "../battle/PostView";
 import React, { useState, useEffect } from "react";
 
@@ -45,6 +46,15 @@ type Battle = {
   title: string
 }
 
+const reportReasons = [
+  { label: "Inappropriate Avatar", value: "avatar" },
+  { label: "Inappropriate Bio", value: "bio" },
+  { label: "Inappropriate Name", value: "name" },
+  { label: "Inappropriate Feed Content", value: "feed" },
+  { label: "Harassment or Abusive Behavior", value: "harassment" },
+  { label: "Other", value: "other" },
+];
+
 export default function OtherProfiles({ navigation }: {navigation: any}) {
   const route = useRoute<OtherProfilesRouteProp>();
   const userId = route.params.userId;
@@ -57,7 +67,10 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
   const [showSubmissions, setShowSubmissions] = useState<boolean>(false);
   const [index, setIndex] = useState<number>(0);
   const [type, setType] = useState<string>("");
+  const [showReportModal, setShowReportModal] = useState<boolean>(false);
+  const [selectedReason, setSelectedReason] = useState<string | null>("");
   const { user } = useAuth();
+  const [details, setDetails] = useState<string>("");
 
 
 // on mount gets the friend status of the other profile
@@ -209,6 +222,73 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
     console.log("friend status", friendStatus);
   }, [friendStatus]);
 
+
+  const reportUser = async () => {
+      console.log("Submitting report...");
+      if (!user) return;
+    
+      const reporterRef = doc(db, "users", user.uid);
+      const reportedRef = doc(db, "users", userId);
+    
+      try {
+        await runTransaction(db, async (transaction) => {
+          // Get current balances
+          const reporterSnap = await transaction.get(reporterRef);
+          const reportedSnap = await transaction.get(reportedRef);
+    
+          if (!reporterSnap.exists()) throw new Error("Reporter not found");
+          if (!reportedSnap.exists()) throw new Error("Reported user not found");
+    
+          const reporterData = reporterSnap.data();
+          const reportedData = reportedSnap.data();
+    
+          const reportsRef = collection(db, "reports");
+          transaction.set(doc(reportsRef), {
+            reporter_data: {
+              id: user.uid,
+              coins: reporterData.coins * 0.1
+            },
+            reported_data: {
+              id: userId,
+              coins: reportedData.coins * 0.1
+            },
+            source: {
+              type: 'profile report',
+              source: userId
+            },
+            reporter_details: details,
+            reported_details: '',
+            reason: selectedReason,
+            users: [user.uid, userId],
+            status: "pending",
+            created_at: Timestamp.now(),
+          });
+
+          // Deduct coins from reporter
+          transaction.update(reporterRef, {
+            coins: reporterData.coins - reporterData.coins * 0.1, // deduct 10% of their coins for reporting
+          });
+    
+          transaction.update(reportedRef, {
+            coins: Math.max(reportedData.coins - reportedData.coins * 0.1), // deduct 10% of their coins for being reported
+          });
+        });
+    
+        // Success alert
+        Alert.alert(
+          "Quick report submitted!",
+          "To prevent false reports, we will hold 10% of coins from each user. Coins will be refunded if your report is valid.",
+          [{ text: "Close", style: "default", onPress: () => setShowReportModal(false) }]
+        );
+    
+        setSelectedReason(null);
+    
+      } catch (err: any) {
+        console.error("Error submitting report:", err);
+        Alert.alert("Error", err.message || "Something went wrong. Please try again.");
+      }
+    };
+
   return (
     <View>
       {loading ? (
@@ -226,7 +306,7 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
               <Text style={{ color: '#666' }}>bio: {userProfile.bio}</Text>
               <Text style={{ color: '#666' }}>coins: {userProfile.coins}</Text>
               <Button title={`${userProfile.friendCount} Friends`} onPress={() => navigation.navigate('FriendsList', {userId: userId})}/>
-
+              <Button title="Report User" onPress={() => setShowReportModal(true)}/>
               {friendStatus === "active" ? (
                 <Button title="Unfriend" onPress={declineFriendRequest}/>
               ) : friendStatus === "pending" ? (
@@ -288,6 +368,47 @@ export default function OtherProfiles({ navigation }: {navigation: any}) {
               </View>
             </Modal>
 
+            <Modal
+            animationType="slide"
+            transparent={true}
+            visible={showReportModal}
+            onRequestClose={() => setShowReportModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Quick Report</Text>
+                <Text style={styles.modalText}>Help us keep the community safe and enjoyable by reporting inappropriate behavior. False reports may result in penalties.</Text>
+
+                <Dropdown
+                  style={styles.dropdown}
+                  data={reportReasons}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select a reason"
+                  value={selectedReason}
+                  onChange={(item : any) => setSelectedReason(item.value)}
+                />
+
+                <TextInput
+                  value={details}
+                  onChangeText={setDetails}
+                  placeholder="Enter details about the report (optional)"
+                  maxLength={200}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#ccc',
+                    padding: 12,
+                    marginBottom: 12,
+                  }}
+                />
+                <Text>{details.length}/200</Text>
+
+                <Button title="Cancel" onPress={() => setShowReportModal(false)} />
+                <Button title="Submit Report" onPress={reportUser}/>
+              </View>
+            </View>
+          </Modal>
+
             </View>
           ) : (
             <ActivityIndicator size="large" color="#0000ff" />
@@ -330,5 +451,15 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
     textAlign: 'center',
+  },
+  dropdown: {
+    height: 50,
+    width: '100%', // Set the dropdown to take the full width of its parent
+    maxWidth: 300, // Optional: Set a maximum width for the dropdown
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 15,
+    alignSelf: "center", // Center the dropdown within its parent
   },
 });
