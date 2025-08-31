@@ -5,10 +5,10 @@ import { auth, db } from "../../firebaseConfig";
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 type AuthContextType = {
-  user: tempUserType |null;
+  user: TempUserType |null;
   loading: boolean;
   logout: () => Promise<void>;
-  tempLogin: ( newUser: { uid: string, userName: string} ) => void;
+  tempLogin: ( newUser: string ) => void;
   tempLogout: () => void;
   session: boolean;
 };
@@ -17,22 +17,26 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
-type tempUserType = {
+type TempUserType = {
   uid: string;
   userName: string;
+  avatarUrl: string;
+  name: string;
+  bio: string;
+  coins: number;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   logout: async () => {},
-  tempLogin: ( newUser: { uid: string, userName: string} ) => {},
+  tempLogin: ( newUser: string ) => {},
   tempLogout: () => {},
   session: false,
 });
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<tempUserType|  null>(null);
+  const [user, setUser] = useState<TempUserType|  null>(null);
   // const [user, setUser] = useState<User |  null>(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<boolean>(false);
@@ -72,16 +76,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const tempLogin = async( newUser:tempUserType ) => {
-    setUser(newUser);
-
+  const tempLogin = async( newUser:string ) => {
     if (newUser) {
-      const userDocRef = doc(db, 'users', newUser.uid);
+      const userDocRef = doc(db, 'users', newUser);
       const userSnap = await getDoc(userDocRef);
 
       if (!userSnap.exists()) {
         await setDoc(userDocRef, {
-          username: newUser.userName,
+          username: '',
           name: '',
           avatar_url: '',
           bio: '',
@@ -89,6 +91,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           rank: 'Unseasoned',
           last_active: serverTimestamp(),
         });
+
+        setUser({
+          uid: newUser,
+          userName: '',
+          avatarUrl: '' ,
+          name: 'User',
+          bio: '',
+          coins: 0,
+        })
+        
+      } else {
+        const data = userSnap.data();
+        setUser({
+          uid: newUser,
+          userName: data.username,
+          avatarUrl: data.avatar_url ,
+          name: data.name,
+          bio: data.bio,
+          coins: data.coins,
+        })
       }
     }
   }

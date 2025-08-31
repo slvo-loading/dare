@@ -41,6 +41,7 @@ export default function DraftPickScreen({ navigation }: BattleStackProps<'DraftP
         }, [])
     )
 
+    //fetch drafts from async storage
     const fetchDraft = async () => {
         if(!user) return;
 
@@ -54,28 +55,24 @@ export default function DraftPickScreen({ navigation }: BattleStackProps<'DraftP
           }
     }
 
- const handleNext = async () => {
-    if (!user || !selectedDraft) return;
 
-    try {
-        setDrafts(prevDrafts => {
-            const updated = prevDrafts.filter(draft => draft.id !== selectedDraft.id);
-            AsyncStorage.setItem(`drafts_${user.uid}`, JSON.stringify(updated));
-            return updated;
-          });
-          
-    } catch (error) {
-        console.log (error)
+    const handleNext = async () => {
+        if (!user || !selectedDraft) return;
+
+        try {
+            setDrafts(prevDrafts => {
+                const updated = prevDrafts.filter(draft => draft.id !== selectedDraft.id);
+                AsyncStorage.setItem(`drafts_${user.uid}`, JSON.stringify(updated));
+                return updated;
+            });
+        } catch (error) {
+            console.log (error)
+        }
+
+        navigation.navigate('SubmitScreen', 
+            {uri: selectedDraft.media, battleId: battleId, 
+            dare: dare, caption: selectedDraft.caption,})
     }
-
-    navigation.navigate('SubmitScreen', 
-        {uri: selectedDraft.media, battleId: battleId, 
-        dare: dare, caption: selectedDraft.caption,})
- }
-
-useEffect(() => {
-    console.log("Drafts fetched:", drafts);
-})
 
   return (
     <SafeAreaView>

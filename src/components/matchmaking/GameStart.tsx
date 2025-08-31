@@ -4,18 +4,7 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { CommonActions } from '@react-navigation/native';
 
 
-type GameStartRouteParams = {
-  type: string;
-  match: {opponentId: string, opponentName: string, dare: string}
-};
-
-type GameStartRouteProp = RouteProp<
-  { GameStart: GameStartRouteParams },
-  'GameStart'
->;
-
-export default function GameStart({ navigation }: GameStartScreenProps) {
-  const route = useRoute<GameStartRouteProp>();
+export default function GameStart({ navigation, route }: GameStartScreenProps) {
   const { type, match } = route.params;
 
   const goToBattleScreen = () => {

@@ -173,6 +173,8 @@ export default function ResultScreen({ navigation }: BattleStackProps<'ResultScr
             transaction.update(userRef, {
                 coins: currCoins + coins
             });
+
+            user.coins = currCoins + coins;
         })
     }
 

@@ -19,13 +19,6 @@ type ResponseRouteProp = RouteProp<
     'ResponseScreen'
 >;
 
-type Submission = {
-  id: string,
-  caption: string;
-  dare: string;
-  media_url: string;
-  submitted_at: string;
-}
 
 type NewSubmission = {
   type: string;

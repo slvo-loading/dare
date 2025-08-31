@@ -7,20 +7,27 @@ import { collection, doc, addDoc, Timestamp, runTransaction } from 'firebase/fir
 import { db } from '../../../firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
 import { Dropdown } from "react-native-element-dropdown";
-import Slider from '@react-native-community/slider';
+import { useAuth } from '../../context/AuthContext';
 
 type MatchData = {
   opponentName: string;
   opponentId: string;
+  avatarUrl: string;
+  opponentUserName: string;
+  name: string;
   dare: string;
   coins: number;
   isHost: boolean;
 }
 
-type MatchmakingScreenRouteProp = RouteProp<
-  { Matchmaking: { dare: { userName: string, userId: string, dare: string, coins: number} } },
-  'Matchmaking'
->;
+type Dare = {
+  userId: string;
+  userName: string;
+  avatarUrl: string;
+  dare: string;
+  coins: number;
+  name: string
+}
 
 const reportReasons = [
   { label: "Cheating / Exploiting", value: "cheating" },
@@ -30,9 +37,9 @@ const reportReasons = [
   { label: "Other", value: "other" },
 ];
 
-export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matchmaking'>) {
-  const route = useRoute<MatchmakingScreenRouteProp>();
-  const [dare, setDare] = useState(route.params.dare); 
+export default function MatchmakingScreen({ navigation, route }: BattleStackProps<'Matchmaking'>) {
+  const {user} = useAuth();
+  const dare = route.params.dare; 
 
   const [status, setStatus] = useState('Looking for match...');
   const [match, setMatch] = useState<MatchData | null>(null);
@@ -40,13 +47,12 @@ export default function MatchmakingScreen({ navigation }: BattleStackProps<'Matc
   const [opponentAccepted, setOpponentAccepted] = useState<boolean>(false);
   const [accepted, setAccepted] = useState<boolean>(false);
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
-  const [details, setDetails] = useState<string>("");
   const socket = useRef<Socket | null>(null);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const matchRef = useRef<MatchData | null>(null);
   const [reportedUser, setReportedUser] = useState<boolean>(false);
+  const [details, setDetails] = useState<string>('');
   const opponentReportedRef = useRef(false);
-  const [severity, setSeverity] = useState<number>(1); 
 
   useEffect(() => {
     matchRef.current = match;
@@ -75,8 +81,9 @@ useFocusEffect(
     });
   
     socketClient.on('requeue', () => {
-      if (opponentReportedRef.current) {
+      if (opponentReportedRef.current || reportedUser) {
         console.log("opponenet reported you, can't requeue");
+        handleReportedUser();
         return;
       }
 
@@ -126,12 +133,8 @@ useFocusEffect(
             dareFromPlayer2: currentMatch.dare
           });
           createGame({ 
-            player1Id: currentMatch.opponentId, 
-            player2Id: dare.userId, 
-            dareFromPlayer1: currentMatch.dare,
-            dareFromPlayer2: dare.dare,
-            player1Coins: currentMatch.coins,
-            player2Coins: dare.coins
+            player1: dare, 
+            player2: currentMatch, 
           })
           console.log("Game created successfully")
         }
@@ -141,7 +144,9 @@ useFocusEffect(
           match: {
             opponentName: currentMatch.opponentName,
             opponentId: currentMatch.opponentId,
-            dare: currentMatch.dare
+            dare: currentMatch.dare,
+            opponentUserName: currentMatch.opponentUserName,
+            opponentAvatar: currentMatch.avatarUrl,
           }
         });
      } catch (error) {
@@ -170,31 +175,32 @@ useFocusEffect(
         setCountdown((prev) => {
           if (prev <= 1 || (accepted && opponentAccepted)) {
             clearInterval(timer);
-            if (socket.current && !accepted && !opponentReportedRef.current) {
+            if (socket.current && !accepted) {
               console.log("user did not accept match, and was not reported, requeuing");
               socket.current.emit('match_timeout')
-            } else if (opponentReportedRef.current) {
-              console.log("opponent reported you, handling reported user");
-              handleReportedUser();
-            }
+            } 
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-      setShowReportModal(false);
+      
       return () => clearInterval(timer);
     }
   }, [match, accepted, opponentAccepted]);
 
   const handleReportedUser = () => {
+    if (!user || !match) return;
+    user.coins = user.coins - match.coins;
+
     console.log("Handling reported user");
     if (socket.current) {
-      socket.current.disconnect(); // Explicitly disconnect the user from the socket
+      socket.current.emit('disconnect')
     }
+
     Alert.alert(
       'You have been reported',
-      'Details about the report can be found in your Settings under Reports.',
+      'This report can be found in your Settings under Reports.',
       [{ text: 'OK', onPress: () => navigation.reset({
           index: 0,
           routes: [{ name: "BattleScreen" }],
@@ -218,58 +224,90 @@ useFocusEffect(
   };
 
   const reportUser = async () => {
-    console.log("submitting report")
-    if(!match) return;
-
+    console.log("Submitting report...");
+    if (!match || !user) return;
+  
+    const reporterRef = doc(db, "users", dare.userId);
+    const reportedRef = doc(db, "users", match.opponentId);
+  
     try {
-      // 1️⃣ Save report to Firebase
-      console.log("Saving report to Firebase");
-      const ref = collection(db, 'reports');
-      await addDoc(ref, {
-        reporter_id: dare.userId,
-        reported_id: match.opponentId,
-        reason: selectedReason,
-        details: details || '',
-        severity: severity,
-        timestamp: Timestamp.now(),
-        status: 'pending',
-      })
-
-      console.log("Report saved successfully");
+      await runTransaction(db, async (transaction) => {
+        // Get current balances
+        const reporterSnap = await transaction.get(reporterRef);
+        const reportedSnap = await transaction.get(reportedRef);
   
-      // 2️⃣ Emit to the other player via Socket.IO
+        if (!reporterSnap.exists()) throw new Error("Reporter not found");
+        if (!reportedSnap.exists()) throw new Error("Reported user not found");
+  
+        const reporterData = reporterSnap.data();
+        const reportedData = reportedSnap.data();
+  
+        const reportsRef = collection(db, "reports");
+        transaction.set(doc(reportsRef), {
+          reporter_data: {
+            id: dare.userId,
+            coins: reporterData.coins * 0.1,
+          },
+          reported_data: {
+            id: match.opponentId,
+            coins: reportedData.coins * 0.1,
+          },
+          source: {
+            type: "matchmaking dare",
+            source: match.dare,
+          },
+          reason: selectedReason,
+          reporter_details: details,
+          reported_details: '',
+          users: [dare.userId, match.opponentId],
+          status: "pending",
+          created_at: Timestamp.now(),
+        });
+
+        // Deduct coins from reporter
+        transaction.update(reporterRef, {
+          coins: reporterData.coins * 0.9, // Deduct 10% fee
+        });
+  
+        transaction.update(reportedRef, {
+          coins: reportedData.coins * 0.9, // Deduct 10% fee
+        });
+      });
+
+  
+      user.coins = user.coins - dare.coins;
+  
+      // Emit to other player
       if (socket.current) {
-        socket.current.emit('reported');
+        socket.current.emit("reported");
       }
-
-      console.log("Report emitted to socket");
   
-      // 3️⃣ Show success alert
+      // Success alert
       Alert.alert(
-        'Quick report submitted!',
-        'You can provide additional details anytime on the Reports page in your Settings. You will be requeued when the countdown ends.',
-        [{ text: 'Close', style: 'default', onPress: () => setShowReportModal(false) }]
+        "Quick report submitted!",
+        "To prevent false reports, we will hold the coins from this match. Coins will be refunded if your report is valid.",
+        [{ text: "Close", style: "default", onPress: () => setShowReportModal(false) }]
       );
   
       // Reset modal fields
       setReportedUser(true);
       setSelectedReason(null);
-      setDetails('');
   
-    } catch (err) {
-      console.error('Error submitting report:', err);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } catch (err: any) {
+      console.error("Error submitting report:", err);
+      Alert.alert("Error", err.message || "Something went wrong. Please try again.");
     }
   };
   
 
-  const createGame = async ({ player1Id, player2Id, dareFromPlayer1, dareFromPlayer2, player1Coins, player2Coins} 
-    : {player1Id:string, player2Id: string, dareFromPlayer1: string, dareFromPlayer2: string, 
-      player1Coins: number, player2Coins: number}) => {
+  const createGame = async ({ player1, player2} 
+    : {player2: MatchData, player1: Dare, }) => {
+        
+  if (!user) return;
 
     await runTransaction(db, async (transaction) => {
-      const p1Ref = doc(db, "users", player1Id);
-      const p2Ref = doc(db, "users", player2Id);
+      const p1Ref = doc(db, "users", player1.userId);
+      const p2Ref = doc(db, "users", player2.opponentId);
 
       const p1Snap = await transaction.get(p1Ref);
       const p2Snap = await transaction.get(p2Ref);
@@ -281,23 +319,26 @@ useFocusEffect(
       const p1Coins = p1Snap.data().coins || 0;
       const p2Coins = p2Snap.data().coins || 0;
 
-      if (p1Coins < player1Coins || p2Coins < player2Coins) {
+      if (p1Coins < player1.coins || p2Coins < player2.coins) {
         throw new Error("One or both players do not have enough coins");
       }
 
-      transaction.update(p1Ref, { coins: p1Coins - player1Coins });
-      transaction.update(p2Ref, { coins: p2Coins - player2Coins });
+      transaction.update(p1Ref, { coins: p1Coins - player1.coins });
+      transaction.update(p2Ref, { coins: p2Coins - player2.coins });
 
       const gameRef = doc(collection(db, "games"));
       transaction.set(gameRef, {
-        player1_id: player1Id,
-        player2_id: player2Id,
-        player1_dare: dareFromPlayer1,
-        player2_dare: dareFromPlayer2,
+        player1_id: player1.userId,
+        player2_id: player2.opponentId,
+        users: [player1.userId, player2.opponentId],
+        player1_dare: player1.dare,
+        player2_dare: player2.dare,
         status: 'active',
-        coins: player1Coins + player2Coins,
+        coins: player1.coins + player2.coins,
         start_date: Timestamp.now(),
       });
+
+      user.coins = user.coins - player1.coins;
     })
   }
 
@@ -347,8 +388,6 @@ useFocusEffect(
                 <Text style={styles.modalTitle}>Quick Report</Text>
                 <Text style={styles.modalText}>Help us keep the community safe and enjoyable by reporting inappropriate behavior. False reports may result in penalties.</Text>
 
-                <Text style={styles.modalText}>You have {countdown} seconds before the match requeues.</Text>
-
                 <Dropdown
                   style={styles.dropdown}
                   data={reportReasons}
@@ -356,27 +395,22 @@ useFocusEffect(
                   valueField="value"
                   placeholder="Select a reason"
                   value={selectedReason}
-                  onChange={(item) => setSelectedReason(item.value)}
-                />
-
-                <Text style={styles.modalText}>Severity: {severity} </Text>
-                <Slider
-                  minimumValue={1}
-                  maximumValue={5}
-                  step={1}
-                  value={severity}
-                  onValueChange={setSeverity}
+                  onChange={(item : any) => setSelectedReason(item.value)}
                 />
 
                 <TextInput
-                  style={styles.textInput}
-                  placeholder="Additional details (optional)"
-                  multiline
-                  maxLength={300}
                   value={details}
                   onChangeText={setDetails}
+                  placeholder="Enter details about the report (optional). You can only enter details once. If you choose not to enter them now, you can add them later in Settings > Reports."
+                  maxLength={200}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#ccc',
+                    padding: 12,
+                    marginBottom: 12,
+                  }}
                 />
-                <Text style={styles.modalText}>{details.length}/300</Text>
+                <Text>{details.length}/200</Text>
 
                 <Button title="Cancel" onPress={() => setShowReportModal(false)} />
                 <Button title="Submit Report" onPress={reportUser}/>

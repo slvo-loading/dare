@@ -51,17 +51,16 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
 
           if (!userSnap.exists() || !battleSnap.exists()) throw new Error("User or battle does not exist");
       
-          const userCoins = userSnap.data().coins || 0;
           const battleCoins = battleSnap.data().coins || 0;
       
           // Check balance
-          if (userCoins < betCoins) {
+          if (user.coins < betCoins) {
             throw new Error("Not enough coins to send invite");
           }
       
           // Deduct coins
           transaction.update(userRef, {
-            coins: userCoins - betCoins,
+            coins: user.coins - betCoins,
           });
 
           transaction.update(battleRef, {
@@ -75,11 +74,15 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
           navigation.navigate("GameStart", { 
             type: "accept", 
             match: {
-              opponentName: battle.opponentName,
+              opponentUserName: battle.opponentName,
               opponentId: battle.opponentId,
+              opponentAvatar: battle.avatarUrl,
+              opponentName: battle.opponentName,
               dare: battle.users_dare,
             }
           });
+
+          user.coins = user.coins - betCoins; 
 
         } catch (error) {
           console.error("Transaction failed:", error);
@@ -166,6 +169,8 @@ export default function HabitConfigScreen({ navigation, route }: BattleStackProp
                   userName: user.userName || 'user',
                   userId: user.uid,
                   dare: dare,
+                  avatarUrl: user.avatarUrl,
+                  name: user.name || 'User',
                   coins: (availableCoins * betCoins),
                 },
               })} 

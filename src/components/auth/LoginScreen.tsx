@@ -4,8 +4,6 @@ import { View, Text, Button, TextInput, SafeAreaView } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { auth, app } from "../../../firebaseConfig";
 import { PhoneAuthProvider, signInWithCredential, signInWithPhoneNumber } from 'firebase/auth';
-import GoogleSignInButton from './GoogleSignInButton';
-import AppleSignInButton from './AppleSignInButton';
 import { LoginScreenProps } from '../../types';
 
 export default function LoginScreen() {
@@ -96,8 +94,6 @@ export default function LoginScreen() {
       ) : null}
 
       <Text style={{ marginTop: 20 }}>{message}</Text> */}
-      {/* <AppleSignInButton />
-      <GoogleSignInButton/> */}
       <TextInput
         value={uid}
         onChangeText={setUid}
@@ -123,7 +119,7 @@ export default function LoginScreen() {
       <Button
         title="Login"
         onPress={() => {
-          tempLogin({uid: uid, userName: userName});
+          tempLogin(uid);
         }}
       />
     </SafeAreaView>

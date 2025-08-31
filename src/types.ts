@@ -45,6 +45,7 @@ type Battle =
 {
   battleId: string;
   opponentId: string;
+  opponentUserName: string,
   opponentName: string,
   avatarUrl: string,
   users_dare: string,
@@ -61,8 +62,8 @@ export type BattleStackParamList = {
     HabitConfig: { type: string; battle: Battle | null; };
     OpponentSelection: undefined;
     InviteFriend: { dare: string, coins: number};
-    Matchmaking: { dare: { userName: string, userId: string, dare: string, coins: number}};
-    GameStart: { type: string; match: { opponentName: string, opponentId: string, dare: string} };
+    Matchmaking: { dare: { userName: string, userId: string, dare: string, coins: number, avatarUrl: string, name: string,}};
+    GameStart: { type: string; match: { opponentName: string, opponentId: string, opponentAvatar: string; dare: string, opponentUserName: string} };
 }
 
 export type LeaderboardTabsParamList = {
@@ -89,6 +90,17 @@ export type ProfileStackParamList = {
     EditInterest: { interestId: string; caption: string; imageUrl: {type: string; uri: string}[]; };
     EditPin: {battle: PinnedBattle;};
     AllReportsScreen: undefined;
+}
+
+type Report = {
+  id: string;
+  details: string;
+  reason: string;
+  status: string;
+  coins: number;
+  createdAt: string;
+  reporter: string;
+  reported: { id: string, dare: string };
 }
 
 type PinnedBattle = {
